@@ -1,0 +1,4 @@
+[Project]
+Name=XiboPi
+Manager=KDevCMakeManager
+VersionControl=kdevgit

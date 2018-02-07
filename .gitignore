@@ -1,3 +1,7 @@
+# CMake and KDevelope
+build/
+.kdev4/
+
 # Prerequisites
 *.d
 
