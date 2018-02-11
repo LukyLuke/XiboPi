@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SOAP-ENV:Envelope
+    xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"
+    xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    xmlns:ns1="urn:xmds">
+ <SOAP-ENV:Body SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+  <ns1:GetFile>
+   <serverKey></serverKey>
+   <hardwareKey></hardwareKey>
+   <fileId>0</fileId>
+   <fileType></fileType>
+   <chunkOffset>0.0</chunkOffset>
+   <chuckSize>0.0</chuckSize>
+  </ns1:GetFile>
+ </SOAP-ENV:Body>
+</SOAP-ENV:Envelope>
