@@ -1,5 +1,5 @@
 /*
- * The ZeroMQ connector to Xibo-Server.
+ * The Display of the XIBO-Client used to show content.
  * Copyright (C) 2018  Lukas Zurschmiede <lukas.zurschmiede@ranta.ch>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -17,21 +17,29 @@
  *
  */
 
-#include <zmq.h>
 #include <string>
-#include <iostream>
+#include <gtk/gtk.h>
+#include <webkit2/webkit2.h>
 
-#ifndef XIBO_ZMQ_H
-#define XIBO_ZMQ_H
+#ifndef XIBO_DISPLAY_H
+#define XIBO_DISPLAY_H
 
 namespace Xibo {
-  class XiboZMQ {
+  class XiboDisplay {
     public:
-      XiboZMQ();
-      XiboZMQ(const char *endpoint);
-      void setEndpoint(const char *endpoint);
-      virtual ~XiboZMQ();
+      XiboDisplay();
+      virtual ~XiboDisplay();
+      void init();
+      void showStatus(const std::string message, int time);
+      static void destroyWindow(GtkWidget * widget, GtkWidget * window);
+      static gboolean closeWebView(WebKitWebView * webView, GtkWidget * window);
+      
+    private:
+      GtkWidget * window = NULL;
+      WebKitWebView * webView = NULL;
+      
+      void initWebView();
+      void hideCursor();
   };
 }
-
-#endif //XIBO_ZMQ_H
+#endif // XIBO_DISPLAY_H
