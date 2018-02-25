@@ -37,9 +37,15 @@ namespace Xibo {
     private:
       GtkWidget * window = NULL;
       WebKitWebView * webView = NULL;
+      GtkWidget *overlay = NULL;
+      GtkWidget *grid = NULL;
+      
+      gint timerStatus = 0;
+      static gboolean hideStatus(gpointer data);
       
       void initWebView();
       void hideCursor();
+      void loadStyles();
   };
 }
 #endif // XIBO_DISPLAY_H
