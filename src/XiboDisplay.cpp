@@ -21,7 +21,7 @@
 
 namespace Xibo {
   XiboDisplay::XiboDisplay() {
-    
+    this->regions = std::list<XiboRegion>();
   }
 
   XiboDisplay::~XiboDisplay() {
@@ -92,6 +92,7 @@ namespace Xibo {
   }
   
   void XiboDisplay::showStatus(const std::string message, int time) {
+    if (message.empty()) return;
     GtkWidget * label = gtk_grid_get_child_at(GTK_GRID(grid), 0, 0);
     bool exists = label != NULL;
     
@@ -127,6 +128,21 @@ namespace Xibo {
       gtk_widget_destroy(label);
     }
     return FALSE;
+  }
+  
+  void XiboDisplay::setLayout(const Xml::XmlLayout::Layout * layout, XiboClient * client) {
+    width = layout->width;
+    height = layout->height;
+    background.assign(layout->backgroundColor);
+    
+    for (auto it = layout->regions.cbegin(); it != layout->regions.end(); ++it) {
+      prepareRegion(&(*it), client);
+    }
+    std::cout << "Regions: " << regions.size() << std::endl;
+  }
+  
+  void XiboDisplay::prepareRegion(const Xml::XmlLayout::Region * region, XiboClient * client) {
+    regions.push_back(XiboRegion(this, client));
   }
   
 }

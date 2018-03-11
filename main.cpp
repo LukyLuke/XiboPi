@@ -42,7 +42,9 @@ int main(int argc, char* argv[]) {
   display.init();
   
   Xibo::XiboClient xibo(&configuration, &display);
-  xibo.connect(server);
+  if (xibo.connect(server)) {
+    xibo.schedule();
+  }
 
   // Run the main GTK+ event loop
   gtk_main();

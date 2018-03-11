@@ -12,14 +12,22 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 set(XIBO_SOURCE
   ${CMAKE_CURRENT_SOURCE_DIR}/xml/XmlDisplay.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/xml/XmlSchedule.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/xml/XmlFiles.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/xml/XmlLayout.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/XiboDisplay.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/XiboClient.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/XiboRegion.cpp
 )
 set(XIBO_HEADER
   ${CMAKE_CURRENT_SOURCE_DIR}/config.h
   ${CMAKE_CURRENT_SOURCE_DIR}/xml/XmlDisplay.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/xml/XmlSchedule.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/xml/XmlFiles.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/xml/XmlLayout.h
   ${CMAKE_CURRENT_SOURCE_DIR}/XiboDisplay.h
   ${CMAKE_CURRENT_SOURCE_DIR}/XiboClient.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/XiboRegion.h
 )
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})

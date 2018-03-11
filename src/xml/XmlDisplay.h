@@ -49,6 +49,8 @@ namespace Xibo {
         std::string displayTimeZone;
         std::map<std::string, std::string> config;
         std::list<DisplayCommand> commands;
+        Display() : status(WAITING), message(""), version(""), displayName(""), screenShotRequested(false), displayTimeZone(""), config({}), commands({}) {};
+        ~Display() {};
       };
 
       XmlDisplay();
@@ -98,7 +100,7 @@ namespace Xibo {
       XML_Parser parser;
       
       /**
-       * Parses the atributes on the "display" tag
+       * Parses the attributes on the "display" tag
        * 
        * @param char **attrs Attributes given on the Tag; Name is on the index, the value on the index+1
        */

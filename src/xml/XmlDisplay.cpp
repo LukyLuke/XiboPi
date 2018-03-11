@@ -23,7 +23,9 @@
 
 namespace Xibo {
   namespace Xml {
-    XmlDisplay::XmlDisplay() { }
+    XmlDisplay::XmlDisplay() {
+      this->parser = XML_ParserCreate(NULL);
+    }
     
     XmlDisplay::~XmlDisplay() {
       XML_ParserFree(parser);
@@ -32,7 +34,9 @@ namespace Xibo {
     void XmlDisplay::parse(const std::string xml, Display *disp) {
       display = disp;
       resetParser();
+#ifdef DEBUG
       std::cout << xml << std::endl;
+#endif
       
       int done = 0;
       if (XML_Parse(parser, xml.c_str(), xml.size(), done) == XML_STATUS_ERROR) {

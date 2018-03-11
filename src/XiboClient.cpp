@@ -19,16 +19,23 @@
 
 #include "XiboClient.h"
 #include "api/xmdsBinding.nsmap"
-#include "xml/XmlDisplay.h"
 
 namespace Xibo {
   XiboClient::XiboClient(const std::map<std::string, std::string> *conf, XiboDisplay *display) {
     this->config = conf;
     this->display = display;
+    this->xmlDisplay = new Xml::XmlDisplay::Display();
+    this->xmlSchedule = new Xml::XmlSchedule::Schedule();
+    this->xmlFiles = new Xml::XmlFiles::Resources();
+    this->xmlLayout = new Xml::XmlLayout::Layout();
   }
   
   XiboClient::~XiboClient() {
     soapProxy = NULL;
+    xmlDisplay = NULL;
+    xmlSchedule = NULL;
+    xmlFiles = NULL;
+    xmlLayout = NULL;
   }
   
   const std::string XiboClient::getConfig(const std::string key) {
@@ -47,7 +54,7 @@ namespace Xibo {
   bool XiboClient::connect(const char * server) {
     connectSoapProxy(server);
    
-    const std::string serverKey ("XIBODEV");
+    const std::string serverKey("XIBODEV");
     const std::string hardwareKey("HardwareKey");
     const std::string displayName("DisplayName");
     const std::string clientType("windows");
@@ -56,23 +63,74 @@ namespace Xibo {
     const std::string macAddress("11:22:33:aa:bb:cc");
     const std::string xmrChannel("Channel");
     const std::string publicKey("");
-    std::string activationMessage;
+    std::string payload;
 
-    int res = soapProxy->RegisterDisplay(serverKey, hardwareKey, displayName, clientType, clientVersion, 1, operationSystem, macAddress, xmrChannel, publicKey, activationMessage);
+    int res = soapProxy->RegisterDisplay(serverKey, hardwareKey, displayName, clientType, clientVersion, 1, operationSystem, macAddress, xmrChannel, publicKey, payload);
 
     if (res == SOAP_OK) {
-      Xml::XmlDisplay::Display d;
       Xml::XmlDisplay disp;
-      disp.parse(activationMessage, &d);
-      display->showStatus(d.message, 60);
+      disp.parse(payload, xmlDisplay);
+      display->showStatus(xmlDisplay->message, 10);
+      return true;
+    }
+    
+    display->showStatus(soapProxy->soap_fault_string(), 60);
+    return false;
+  }
+  
+  void XiboClient::schedule() {
+    const std::string serverKey("XIBODEV");
+    const std::string hardwareKey("HardwareKey");
+    std::string payload;
+    
+    int res = soapProxy->Schedule(serverKey, hardwareKey, payload);
+    
+    if (res == SOAP_OK) {
+      Xml::XmlSchedule schedule;
+      schedule.parse(payload, xmlSchedule);
+      display->showStatus(xmlSchedule->message, 10);
       
-      //std::cout << d.commands.front().command << std::endl;
+      getRequiredResources();
+      getLayout();
+      
+      display->setLayout(xmlLayout, this);
       
     } else {
-      std::cout << "NOT OK" << std::endl;
-      std::cout << "Error: " << soapProxy->soap_fault_string() << std::endl;
       display->showStatus(soapProxy->soap_fault_string(), 60);
     }
-    return (res == SOAP_OK);
+  }
+  
+  void XiboClient::getRequiredResources() {
+    const std::string serverKey("XIBODEV");
+    const std::string hardwareKey("HardwareKey");
+    std::string payload;
+    
+    int res = soapProxy->RequiredFiles(serverKey, hardwareKey, payload);
+    
+    if (res == SOAP_OK) {
+      Xml::XmlFiles resources;
+      resources.parse(payload, xmlFiles);
+      display->showStatus(xmlFiles->message, 10);
+      
+    } else {
+      display->showStatus(soapProxy->soap_fault_string(), 60);
+    }
+  }
+  
+  void XiboClient::getLayout() {
+    const std::string serverKey("XIBODEV");
+    const std::string hardwareKey("HardwareKey");
+    xsd__base64Binary payload = xsd__base64Binary();
+    
+    int res = soapProxy->GetFile(serverKey, hardwareKey, xmlSchedule->defaultLayout, "layout", 0, 0, payload);
+    
+    if (res == SOAP_OK) {
+      Xml::XmlLayout layout;
+      layout.parse(std::string(reinterpret_cast<const char *>(payload.__ptr), payload.__size), xmlLayout);
+      display->showStatus(xmlFiles->message, 10);
+      
+    } else {
+      display->showStatus(soapProxy->soap_fault_string(), 60);
+    }
   }
 }

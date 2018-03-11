@@ -18,8 +18,12 @@
  */
 
 #include <string>
+#include <list>
 #include <gtk/gtk.h>
 #include <webkit2/webkit2.h>
+
+#include "XiboRegion.h"
+#include "xml/XmlLayout.h"
 
 #ifndef XIBO_DISPLAY_H
 #define XIBO_DISPLAY_H
@@ -33,6 +37,7 @@ namespace Xibo {
       void showStatus(const std::string message, int time);
       static void destroyWindow(GtkWidget * widget, GtkWidget * window);
       static gboolean closeWebView(WebKitWebView * webView, GtkWidget * window);
+      void setLayout(const Xml::XmlLayout::Layout * layout, XiboClient * client);
       
     private:
       GtkWidget * window = NULL;
@@ -43,9 +48,15 @@ namespace Xibo {
       gint timerStatus = 0;
       static gboolean hideStatus(gpointer data);
       
+      uint32_t width = 0;
+      uint32_t height = 0;
+      std::string background = "";
+      std::list<XiboRegion> regions;
+      
       void initWebView();
       void hideCursor();
       void loadStyles();
+      void prepareRegion(const Xml::XmlLayout::Region * region, XiboClient * client);
   };
 }
 #endif // XIBO_DISPLAY_H

@@ -18,10 +18,15 @@
  */
 
 #include <map>
+#include <list>
 #include <string>
 
 #include "api/soapxmdsBindingProxy.h"
 #include "XiboDisplay.h"
+#include "xml/XmlDisplay.h"
+#include "xml/XmlSchedule.h"
+#include "xml/XmlFiles.h"
+#include "xml/XmlLayout.h"
 
 #ifndef XIBO_CLIENT_H
 #define XIBO_CLIENT_H
@@ -32,14 +37,22 @@ namespace Xibo {
     XiboClient(const std::map<std::string, std::string> * conf, XiboDisplay * display);
     virtual ~XiboClient();
     bool connect(const char * server);
+    void schedule();
   
   private:
-    const std::map<std::string, std::string> *config;
+    const std::map<std::string, std::string> * config;
     xmdsBindingProxy * soapProxy = NULL;
     XiboDisplay * display = NULL;
     
+    Xml::XmlDisplay::Display * xmlDisplay;
+    Xml::XmlSchedule::Schedule * xmlSchedule;
+    Xml::XmlFiles::Resources * xmlFiles;
+    Xml::XmlLayout::Layout * xmlLayout;
+    
     const std::string getConfig(const std::string key);
     void connectSoapProxy(const char * server);
+    void getRequiredResources();
+    void getLayout();
   };
 }
 
