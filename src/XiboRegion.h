@@ -20,6 +20,8 @@
 #ifndef XIBO_REGION_H
 #define XIBO_REGION_H
 
+#include "xml/XmlLayout.h"
+
 namespace Xibo {
   class XiboDisplay;
   class XiboClient;
@@ -27,11 +29,13 @@ namespace Xibo {
   class XiboRegion {
     public:
       XiboRegion(XiboDisplay * display, XiboClient * client);
-      virtual ~XiboRegion();
+      ~XiboRegion();
+      void show(const Xml::XmlLayout::Region * reg);
       
     private:
       XiboDisplay * display;
       XiboClient * client;
+      const Xml::XmlLayout::Region * region;
   };
 }
 #endif // XIBO_REGION_H

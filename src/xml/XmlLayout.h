@@ -77,7 +77,7 @@ namespace Xibo {
       };
 
       XmlLayout();
-      virtual ~XmlLayout();
+      ~XmlLayout();
       
       /**
       * Parsing the Layout payload sent from XIBO

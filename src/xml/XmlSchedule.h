@@ -64,7 +64,7 @@ namespace Xibo {
       };
 
       XmlSchedule();
-      virtual ~XmlSchedule();
+      ~XmlSchedule();
       
       /**
       * Parsing the Schedule payload sent from XIBO

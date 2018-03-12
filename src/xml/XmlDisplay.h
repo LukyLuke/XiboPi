@@ -54,7 +54,7 @@ namespace Xibo {
       };
 
       XmlDisplay();
-      virtual ~XmlDisplay();
+      ~XmlDisplay();
       
       const constexpr char* statusToString(const DisplayStatus value) {
         const char* values[] = { "READY", "ADDED", "WAITING" };

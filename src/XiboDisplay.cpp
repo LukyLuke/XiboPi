@@ -25,8 +25,6 @@ namespace Xibo {
   }
 
   XiboDisplay::~XiboDisplay() {
-    webView = NULL;
-    window = NULL;
   }
   
   void XiboDisplay::init() {
@@ -49,11 +47,13 @@ namespace Xibo {
   }
   
   void XiboDisplay::destroyWindow(GtkWidget * widget, GtkWidget * window) {
+    delete window;
     gtk_main_quit();
   }
   
   gboolean XiboDisplay::closeWebView(WebKitWebView * webView, GtkWidget * window) {
     gtk_widget_destroy(window);
+    delete webView;
     return TRUE;
   }
   
@@ -138,11 +138,12 @@ namespace Xibo {
     for (auto it = layout->regions.cbegin(); it != layout->regions.end(); ++it) {
       prepareRegion(&(*it), client);
     }
-    std::cout << "Regions: " << regions.size() << std::endl;
   }
   
   void XiboDisplay::prepareRegion(const Xml::XmlLayout::Region * region, XiboClient * client) {
-    regions.push_back(XiboRegion(this, client));
+    XiboRegion * reg = new XiboRegion(this, client);
+    reg->show(region);
+    regions.push_back(*reg);
   }
   
 }

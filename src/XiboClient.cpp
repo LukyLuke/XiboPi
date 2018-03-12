@@ -31,11 +31,12 @@ namespace Xibo {
   }
   
   XiboClient::~XiboClient() {
-    soapProxy = NULL;
-    xmlDisplay = NULL;
-    xmlSchedule = NULL;
-    xmlFiles = NULL;
-    xmlLayout = NULL;
+    if (soapProxy != NULL)
+      delete soapProxy;
+    delete xmlDisplay;
+    delete xmlSchedule;
+    delete xmlFiles;
+    delete xmlLayout;
   }
   
   const std::string XiboClient::getConfig(const std::string key) {
@@ -93,8 +94,6 @@ namespace Xibo {
       getRequiredResources();
       getLayout();
       
-      display->setLayout(xmlLayout, this);
-      
     } else {
       display->showStatus(soapProxy->soap_fault_string(), 60);
     }
@@ -128,6 +127,7 @@ namespace Xibo {
       Xml::XmlLayout layout;
       layout.parse(std::string(reinterpret_cast<const char *>(payload.__ptr), payload.__size), xmlLayout);
       display->showStatus(xmlFiles->message, 10);
+      display->setLayout(xmlLayout, this);
       
     } else {
       display->showStatus(soapProxy->soap_fault_string(), 60);

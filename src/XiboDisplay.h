@@ -32,7 +32,7 @@ namespace Xibo {
   class XiboDisplay {
     public:
       XiboDisplay();
-      virtual ~XiboDisplay();
+      ~XiboDisplay();
       void init();
       void showStatus(const std::string message, int time);
       static void destroyWindow(GtkWidget * widget, GtkWidget * window);
@@ -42,8 +42,8 @@ namespace Xibo {
     private:
       GtkWidget * window = NULL;
       WebKitWebView * webView = NULL;
-      GtkWidget *overlay = NULL;
-      GtkWidget *grid = NULL;
+      GtkWidget * overlay = NULL;
+      GtkWidget * grid = NULL;
       
       gint timerStatus = 0;
       static gboolean hideStatus(gpointer data);

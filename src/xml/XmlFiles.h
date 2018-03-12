@@ -70,7 +70,7 @@ namespace Xibo {
       };
 
       XmlFiles();
-      virtual ~XmlFiles();
+      ~XmlFiles();
       
       /**
       * Parsing the Resources payload sent from XIBO

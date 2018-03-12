@@ -27,4 +27,9 @@ namespace Xibo {
 
   XiboRegion::~XiboRegion() {
   }
+  
+  void XiboRegion::show(const Xml::XmlLayout::Region * reg) {
+    region = reg;
+    std::cout << "Region: " << region->id << std::endl;
+  }
 }

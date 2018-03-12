@@ -35,7 +35,7 @@ namespace Xibo {
   class XiboClient {
   public:
     XiboClient(const std::map<std::string, std::string> * conf, XiboDisplay * display);
-    virtual ~XiboClient();
+    ~XiboClient();
     bool connect(const char * server);
     void schedule();
   
