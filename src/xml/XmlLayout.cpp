@@ -135,8 +135,8 @@ namespace Xibo {
       for (int i = 0; attrs[i]; i += 2) {
         if      (strcmp("id", attrs[i]) == 0)     { layout->regions.back().id = atoi(attrs[i + 1]); }
         else if (strcmp("height", attrs[i]) == 0) { layout->regions.back().height = atoi(attrs[i + 1]); }
-        else if (strcmp("top", attrs[i]) == 0)    { layout->regions.back().x = atoi(attrs[i + 1]); }
-        else if (strcmp("left", attrs[i]) == 0)   { layout->regions.back().y = atoi(attrs[i + 1]); }
+        else if (strcmp("top", attrs[i]) == 0)    { layout->regions.back().y = atoi(attrs[i + 1]); }
+        else if (strcmp("left", attrs[i]) == 0)   { layout->regions.back().x = atoi(attrs[i + 1]); }
         else if (strcmp("width", attrs[i]) == 0)  { layout->regions.back().width = atoi(attrs[i + 1]); }
         else if (strcmp("zindex", attrs[i]) == 0) { layout->regions.back().z = atoi(attrs[i + 1]); }
       }

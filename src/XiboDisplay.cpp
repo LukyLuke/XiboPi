@@ -30,20 +30,25 @@ namespace Xibo {
   void XiboDisplay::init() {
     // Create a new Window and make if Fullscreen with no border
     window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    //gtk_window_fullscreen(GTK_WINDOW(window));
-    gtk_window_set_default_size(GTK_WINDOW(window), 800, 600);
+    gtk_window_fullscreen(GTK_WINDOW(window));
+    gtk_style_context_add_class(gtk_widget_get_style_context(window), "window");
     
-    loadStyles();
+    // Resize to fullscreen
+    GdkRectangle geometry = {0, 0, 0, 0};
+    GdkMonitor * monitor = gdk_display_get_primary_monitor(gdk_display_get_default());
+    gdk_monitor_get_geometry(monitor, &geometry);
+    gtk_window_resize(GTK_WINDOW(window), geometry.width, geometry.height);
+    
+    loadStatusStyles();
     hideCursor();
-    initWebView();
+    initFixedArea();
     
-    // Make sure the main window and all its contents are visible and the it has the focus
-    gtk_widget_grab_focus(GTK_WIDGET(webView));
+    // Make sure the main window and all its contents are visible
     gtk_widget_show_all(window);
     
     // Signals for closing and destroying
     g_signal_connect(window, "destroy", G_CALLBACK(XiboDisplay::destroyWindow), NULL);
-    g_signal_connect(webView, "close", G_CALLBACK(XiboDisplay::closeWebView), window);
+    //g_signal_connect(fixed, "destroy", G_CALLBACK(XiboDisplay::closeWebView), window);
   }
   
   void XiboDisplay::destroyWindow(GtkWidget * widget, GtkWidget * window) {
@@ -63,7 +68,7 @@ namespace Xibo {
     gdk_window_set_cursor(gdkWindow, cursor);
   }
   
-  void XiboDisplay::loadStyles() {
+  void XiboDisplay::loadStatusStyles() {
     GtkCssProvider * provider = gtk_css_provider_new();
     GdkDisplay * display = gdk_display_get_default();
     GdkScreen * screen = gdk_display_get_default_screen(display);
@@ -76,19 +81,31 @@ namespace Xibo {
     g_object_unref(provider);
   }
   
-  void XiboDisplay::initWebView() {
-    // Creates an Overlay show messages on top of the WebView container
+  void XiboDisplay::setWindowBackground() {
+    GtkCssProvider * provider = gtk_css_provider_new();
+    GdkDisplay * display = gdk_display_get_default();
+    GdkScreen * screen = gdk_display_get_default_screen(display);
+
+    std::string css = std::string(".window { background-color:").append(background).append(";}");
+    
+    gtk_style_context_add_provider_for_screen(screen, GTK_STYLE_PROVIDER(provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+    gtk_css_provider_load_from_data(provider, css.c_str(), css.size(), NULL);
+
+    g_object_unref(provider);
+  }
+  
+  void XiboDisplay::initFixedArea() {
+    // Creates an Overlay show messages on top of the fixed container
     overlay = gtk_overlay_new();
     gtk_container_add(GTK_CONTAINER(window), overlay);
     
-    // The Grud is used to show the Overlay-messages
+    // The Grid is used to show the Overlay-messages
     grid = gtk_grid_new();
     gtk_overlay_add_overlay(GTK_OVERLAY(overlay), grid);
     
-    // Creates the WebView and add it to the background of the overlay
-    webView = WEBKIT_WEB_VIEW(webkit_web_view_new());
-    gtk_container_add(GTK_CONTAINER(overlay), GTK_WIDGET(webView));
-    webkit_web_view_load_uri(webView, "about:blank");
+    // Creates the GtkFixed and add it to the background of the overlay
+    fixed = gtk_fixed_new();
+    gtk_container_add(GTK_CONTAINER(overlay), GTK_WIDGET(fixed));
   }
   
   void XiboDisplay::showStatus(const std::string message, int time) {
@@ -134,6 +151,21 @@ namespace Xibo {
     width = layout->width;
     height = layout->height;
     background.assign(layout->backgroundColor);
+    setWindowBackground();
+    
+    int32_t w;
+    int32_t h;
+    gtk_window_get_size(GTK_WINDOW(window), &w, &h);
+    
+    float xs = (float)w / width;
+    float ys = (float)h / height;
+    if (xs < ys) {
+      scale = xs;
+      offset_y = ((float)(height - h) / 2) * scale;
+    } else {
+      scale = ys;
+      offset_x = ((float)(width - w) / 2) * scale;
+    }
     
     for (auto it = layout->regions.cbegin(); it != layout->regions.end(); ++it) {
       prepareRegion(&(*it), client);
@@ -141,9 +173,20 @@ namespace Xibo {
   }
   
   void XiboDisplay::prepareRegion(const Xml::XmlLayout::Region * region, XiboClient * client) {
-    XiboRegion * reg = new XiboRegion(this, client);
-    reg->show(region);
+    XiboRegion * reg = new XiboRegion(this, client, region);
+    reg->show();
     regions.push_back(*reg);
   }
   
+  WebKitWebView * XiboDisplay::addRegion(const uint32_t id, const uint32_t x, const uint32_t y, const uint32_t w, const uint32_t h) {
+    WebKitWebView * web = WEBKIT_WEB_VIEW(webkit_web_view_new());
+    gtk_widget_set_size_request (GTK_WIDGET(web), (uint32_t)(w * scale), (uint32_t)(h * scale));
+    gtk_fixed_put(GTK_FIXED(fixed), GTK_WIDGET(web), (uint32_t)(x * scale) + offset_x, (uint32_t)(y * scale) + offset_y);
+    
+    webkit_web_view_load_uri(web, "about:blank");
+    gtk_widget_show_all(window);
+    
+    g_signal_connect(web, "close", G_CALLBACK(XiboDisplay::closeWebView), window);
+    return web;
+  }
 }

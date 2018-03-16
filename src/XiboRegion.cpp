@@ -19,17 +19,23 @@
 
 #include "XiboRegion.h"
 
+#include "XiboClient.h"
+#include "XiboDisplay.h"
+
 namespace Xibo {
-  XiboRegion::XiboRegion(XiboDisplay * display, XiboClient * client) {
+  XiboRegion::XiboRegion(XiboDisplay * display, XiboClient * client, const Xml::XmlLayout::Region * reg) {
     this->display = display;
     this->client = client;
+    this->region = reg;
   }
 
   XiboRegion::~XiboRegion() {
   }
   
-  void XiboRegion::show(const Xml::XmlLayout::Region * reg) {
-    region = reg;
-    std::cout << "Region: " << region->id << std::endl;
+  void XiboRegion::show() {
+    if (webView == NULL) {
+      webView = display->addRegion(region->id, region->x, region->y, region->width, region->height);
+    }
   }
+  
 }

@@ -38,10 +38,11 @@ namespace Xibo {
       static void destroyWindow(GtkWidget * widget, GtkWidget * window);
       static gboolean closeWebView(WebKitWebView * webView, GtkWidget * window);
       void setLayout(const Xml::XmlLayout::Layout * layout, XiboClient * client);
+      WebKitWebView * addRegion(const uint32_t id, const uint32_t x, const uint32_t y, const uint32_t w, const uint32_t h);
       
     private:
       GtkWidget * window = NULL;
-      WebKitWebView * webView = NULL;
+      GtkWidget * fixed = NULL;
       GtkWidget * overlay = NULL;
       GtkWidget * grid = NULL;
       
@@ -50,12 +51,16 @@ namespace Xibo {
       
       uint32_t width = 0;
       uint32_t height = 0;
+      uint32_t offset_x = 0;
+      uint32_t offset_y = 0;
+      float scale = 1;
       std::string background = "";
       std::list<XiboRegion> regions;
       
-      void initWebView();
+      void initFixedArea();
       void hideCursor();
-      void loadStyles();
+      void loadStatusStyles();
+      void setWindowBackground();
       void prepareRegion(const Xml::XmlLayout::Region * region, XiboClient * client);
   };
 }

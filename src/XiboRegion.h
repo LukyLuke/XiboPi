@@ -20,6 +20,9 @@
 #ifndef XIBO_REGION_H
 #define XIBO_REGION_H
 
+#include <gtk/gtk.h>
+#include <webkit2/webkit2.h>
+
 #include "xml/XmlLayout.h"
 
 namespace Xibo {
@@ -28,14 +31,15 @@ namespace Xibo {
   
   class XiboRegion {
     public:
-      XiboRegion(XiboDisplay * display, XiboClient * client);
+      XiboRegion(XiboDisplay * display, XiboClient * client, const Xml::XmlLayout::Region * reg);
       ~XiboRegion();
-      void show(const Xml::XmlLayout::Region * reg);
+      void show();
       
     private:
-      XiboDisplay * display;
-      XiboClient * client;
       const Xml::XmlLayout::Region * region;
+      XiboClient * client;
+      XiboDisplay * display;
+      WebKitWebView * webView = NULL;
   };
 }
 #endif // XIBO_REGION_H
