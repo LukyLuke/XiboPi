@@ -40,7 +40,7 @@ namespace Xibo {
     gtk_window_resize(GTK_WINDOW(window), geometry.width, geometry.height);
     
     loadStatusStyles();
-    hideCursor();
+    prepareWindow();
     initFixedArea();
     
     // Make sure the main window and all its contents are visible
@@ -62,10 +62,19 @@ namespace Xibo {
     return TRUE;
   }
   
-  void XiboDisplay::hideCursor() {
+  void XiboDisplay::prepareWindow() {
+    // Hide the cursor
     GdkCursor * cursor = gdk_cursor_new_for_display(gdk_display_get_default(), GDK_BLANK_CURSOR);
-    GdkWindow * gdkWindow = gtk_widget_get_window(window);
+    GdkWindow * gdkWindow = gtk_widget_get_window(GTK_WIDGET(window));
     gdk_window_set_cursor(gdkWindow, cursor);
+    
+    // Set RGBA mode so we can set the webViews background transparent
+    GdkScreen * screen = gtk_window_get_screen(GTK_WINDOW(window));
+    GdkVisual * rgbaVisual = gdk_screen_get_rgba_visual(screen);
+    if (rgbaVisual) {
+      gtk_widget_set_visual(GTK_WIDGET(window), rgbaVisual);
+      gtk_widget_set_app_paintable(GTK_WIDGET(window), TRUE);
+    }
   }
   
   void XiboDisplay::loadStatusStyles() {

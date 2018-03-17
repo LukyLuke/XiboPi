@@ -20,6 +20,8 @@
 #ifndef XIBO_REGION_H
 #define XIBO_REGION_H
 
+#include <list>
+
 #include <gtk/gtk.h>
 #include <webkit2/webkit2.h>
 
@@ -39,7 +41,14 @@ namespace Xibo {
       const Xml::XmlLayout::Region * region;
       XiboClient * client;
       XiboDisplay * display;
-      WebKitWebView * webView = NULL;
+      WebKitWebView * webView;
+      
+      std::list<Xml::XmlLayout::Media>::const_iterator media;
+      void prepareWebView();
+      
+      // Timer for changing media
+      gint timerStatus = 0;
+      static gboolean timer(gpointer data);
   };
 }
 #endif // XIBO_REGION_H

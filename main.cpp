@@ -21,19 +21,52 @@
 #include <fstream>
 
 #include <gtk/gtk.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <pwd.h>
 
 #include "src/XiboDisplay.h"
 #include "src/XiboClient.h"
 #include "src/config.h"
 
 void readConfiguration(const char * file);
+std::string getConfigDir();
 
 config::data configuration;
 const char server[] = "http://xibo.localhost/xmds.php?v=5";
 const char config_file[] = "config.ini";
 
 int main(int argc, char* argv[]) {
-  readConfiguration(config_file);
+  std::string config_dir = getConfigDir();
+  std::string conf = std::string(config_dir).append(config_file);
+  readConfiguration(conf.c_str());
+  
+  configuration.insert(std::pair<std::string, std::string>("config", conf));
+  configuration.insert(std::pair<std::string, std::string>("home", std::string(config_dir)));
+  configuration.insert(std::pair<std::string, std::string>("cache", std::string(config_dir).append("cache/")));
+  configuration.insert(std::pair<std::string, std::string>("base_uri", std::string("file:///").append(config_dir).append("cache/")));
+  
+  // Create configuration directory and cache directory if needed
+  int ret;
+  mode_t mode = 0760;
+  ret = mkdir(configuration["home"].c_str(), mode);
+  if (ret == 0 || errno == EEXIST) {
+    ret = mkdir(configuration["cache"].c_str(), mode);
+  }
+  if (ret != 0 && errno != EEXIST) {
+    std::cout << "Path: " << configuration["cache"] << std::endl;
+    std::cout << "Error while create configuration: " << strerror(errno) << std::endl;
+    exit(1);
+  }
+  
+  // Change to the cache directory for letting the web components just show the content
+  ret = chdir(configuration["cache"].c_str());
+  if (ret != 0) {
+    std::cout << "Path: " << configuration["cache"] << std::endl;
+    std::cout << "Error while change directory: " << strerror(errno) << std::endl;
+    exit(1);
+  }
   
   // Initialize GTK+
   gtk_init(&argc, &argv);
@@ -55,4 +88,12 @@ void readConfiguration(const char * file) {
   std::ifstream ifs(file, std::ifstream::in);
   ifs >> configuration;
   ifs.close();
+}
+
+std::string getConfigDir() {
+  const char * home = getenv("HOME");
+  if (home == NULL) {
+    home = getpwuid(getuid())->pw_dir;
+  }
+  return std::string(home).append("/.Xibo/");
 }

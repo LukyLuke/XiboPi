@@ -52,6 +52,19 @@ namespace Xibo {
     }
   }
   
+  const std::string XiboClient::getFileUrl(const uint32_t fileId) {
+    std::string path = getConfig("base_uri");
+    std::list<Xml::XmlFiles::Media>::const_iterator it = xmlFiles->media.cbegin();
+    while (it != xmlFiles->media.cend()) {
+      const Xml::XmlFiles::Media * m = &(*it);
+      if (m->id == fileId) {
+        return path.append(m->path);
+      }
+      it++;
+    }
+    return "";
+  }
+  
   bool XiboClient::connect(const char * server) {
     connectSoapProxy(server);
    
@@ -92,10 +105,69 @@ namespace Xibo {
       display->showStatus(xmlSchedule->message, 10);
       
       getRequiredResources();
+      updateMediaCache();
       getLayout();
       
     } else {
       display->showStatus(soapProxy->soap_fault_string(), 60);
+    }
+  }
+  
+  const std::string XiboClient::getResource(const uint32_t region, const uint32_t media) {
+    const std::string serverKey("XIBODEV");
+    const std::string hardwareKey("HardwareKey");
+    std::string payload;
+    
+    int res = soapProxy->GetResource(serverKey, hardwareKey, xmlSchedule->defaultLayout, std::to_string(region), std::to_string(media), payload);
+    
+    if (res == SOAP_OK) {
+      return payload;
+    }
+    
+    display->showStatus(soapProxy->soap_fault_string(), 60);
+    return std::string(soapProxy->soap_fault_string());
+  }
+  
+  void XiboClient::getResource(const Xml::XmlFiles::Media * media) {
+    const std::string serverKey("XIBODEV");
+    const std::string hardwareKey("HardwareKey");
+    const std::string tmp("/tmp/XiboDev/");
+    xsd__base64Binary payload = xsd__base64Binary();
+    
+    int res = soapProxy->GetFile(serverKey, hardwareKey, media->id, "media", 0, media->size, payload);
+    
+    if (res == SOAP_OK) {
+      std::string file = std::string(getConfig("cache")).append(media->path);
+
+      FILE * fp = fopen(file.c_str(), "w");
+      if (fp == NULL) {
+        display->showStatus(std::string("Unable to write File: ").append(file), 60);
+        return;
+      }
+      
+      fwrite(payload.__ptr, sizeof(char), payload.__size, fp);
+      fclose(fp);
+    } else {
+      display->showStatus(soapProxy->soap_fault_string(), 60);
+    }
+  }
+  
+  void XiboClient::updateMediaCache() {
+    const std::string serverKey("XIBODEV");
+    const std::string hardwareKey("HardwareKey");
+    std::string payload = "";
+    bool success = false;
+    
+    int res = soapProxy->MediaInventory(serverKey, hardwareKey, payload, success);
+    
+    if ((res == SOAP_OK) && success) {
+      return;
+    }
+    
+    std::list<Xml::XmlFiles::Media>::const_iterator it = xmlFiles->media.cbegin();
+    while (it != xmlFiles->media.cend()) {
+      getResource(&(*it));
+      it++;
     }
   }
   

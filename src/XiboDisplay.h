@@ -58,7 +58,7 @@ namespace Xibo {
       std::list<XiboRegion> regions;
       
       void initFixedArea();
-      void hideCursor();
+      void prepareWindow();
       void loadStatusStyles();
       void setWindowBackground();
       void prepareRegion(const Xml::XmlLayout::Region * region, XiboClient * client);

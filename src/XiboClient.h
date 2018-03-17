@@ -38,6 +38,10 @@ namespace Xibo {
     ~XiboClient();
     bool connect(const char * server);
     void schedule();
+    void getResource(const Xml::XmlFiles::Media * media);
+    const std::string getResource(const uint32_t region, const uint32_t media);
+    const std::string getFileUrl(const uint32_t fileId);
+    const std::string getConfig(const std::string key);
   
   private:
     const std::map<std::string, std::string> * config;
@@ -49,10 +53,10 @@ namespace Xibo {
     Xml::XmlFiles::Resources * xmlFiles;
     Xml::XmlLayout::Layout * xmlLayout;
     
-    const std::string getConfig(const std::string key);
     void connectSoapProxy(const char * server);
     void getRequiredResources();
     void getLayout();
+    void updateMediaCache();
   };
 }
 
