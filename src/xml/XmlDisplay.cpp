@@ -122,20 +122,23 @@ namespace Xibo {
         strncpy((char*)(&display->screenShotRequested), text, len);
       }
       else if (timezoneTag) {
-        display->displayTimeZone.assign(text, len);
+        display->displayTimeZone.append(text, len);
       }
       else if (displayNameTag) {
-        display->displayName.assign(text, len);
+        display->displayName.append(text, len);
       }
       else if (!settingsTag.empty()) {
-        display->config[settingsTag].assign(text, len);
+        if (display->config.find(settingsTag) == display->config.end()) {
+          display->config[settingsTag] = "";
+        }
+        display->config[settingsTag].append(text, len);
       }
       else if (commandTag) {
         if (commandCmdTag) {
-          display->commands.back().command.assign(text, len);
+          display->commands.back().command.append(text, len);
         }
         else if (commandValTag) {
-          display->commands.back().validation.assign(text, len);
+          display->commands.back().validation.append(text, len);
         }
       }
     }

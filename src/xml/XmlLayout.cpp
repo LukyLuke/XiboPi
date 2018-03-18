@@ -67,7 +67,7 @@ namespace Xibo {
       }
       else if (regionTag && (strcmp(TAG_MEDIA, name) == 0)) {
         mediaTag = true;
-        layout->regions.back().media.push_back({0, "", "", 0, false, 0, {}, {}, {}});
+        layout->regions.back().media.push_back({0, "", "", 0, false, 0, "", {}, {}});
         parseMediaAttrs(attrs);
       }
       else if (mediaTag && (strcmp(TAG_AUDIO, name) == 0)) {
@@ -106,16 +106,22 @@ namespace Xibo {
     
     void XmlLayout::expatCharacterData(const char *text, int len) {
       if (audioTag) {
-        layout->regions.back().media.back().audio.back().uri.assign(text, len);
+        layout->regions.back().media.back().audio.back().uri.append(text, len);
       }
       else if (rawTag) {
-        layout->regions.back().media.back().raw[settingsTag] = std::string(text, len);
+        layout->regions.back().media.back().raw.append(text, len);
       }
       else if (mediaTag) {
-        layout->regions.back().media.back().options[settingsTag] = std::string(text, len);
+        if (layout->regions.back().media.back().options.find(settingsTag) == layout->regions.back().media.back().options.end()) {
+          layout->regions.back().media.back().options[settingsTag] = "";
+        }
+        layout->regions.back().media.back().options[settingsTag].append(text, len);
       }
       else if (regionTag) {
-        layout->regions.back().options[settingsTag] = std::string(text, len);
+        if (layout->regions.back().options.find(settingsTag) == layout->regions.back().options.end()) {
+          layout->regions.back().options[settingsTag] = "";
+        }
+        layout->regions.back().options[settingsTag].append(text, len);
       }
     }
 

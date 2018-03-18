@@ -46,8 +46,8 @@ namespace Xibo {
         uint32_t duration;
         bool useDuration;
         uint32_t file;
+        std::string raw;
         std::map<std::string, std::string> options;
-        std::map<std::string, std::string> raw;
         std::list<Audio> audio;
       };
       
