@@ -60,10 +60,10 @@ int main(int argc, char* argv[]) {
     exit(1);
   }
   
-  // Change to the cache directory for letting the web components just show the content
-  ret = chdir(configuration["cache"].c_str());
+  // Change to the home directory
+  ret = chdir(configuration["home"].c_str());
   if (ret != 0) {
-    std::cout << "Path: " << configuration["cache"] << std::endl;
+    std::cout << "Path: " << configuration["home"] << std::endl;
     std::cout << "Error while change directory: " << strerror(errno) << std::endl;
     exit(1);
   }
