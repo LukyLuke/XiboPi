@@ -18,7 +18,11 @@
  */
 
 #include "XiboClient.h"
+
 #include "api/xmdsBinding.nsmap"
+#include <openssl/md5.h>
+#include <ctime>
+#include <cstring>
 
 namespace Xibo {
   XiboClient::XiboClient(const std::map<std::string, std::string> *conf, XiboDisplay *display) {
@@ -131,9 +135,15 @@ namespace Xibo {
   void XiboClient::getResource(const Xml::XmlFiles::Media * media) {
     const std::string serverKey("XIBODEV");
     const std::string hardwareKey("HardwareKey");
-    const std::string tmp("/tmp/XiboDev/");
-    xsd__base64Binary payload = xsd__base64Binary();
     
+    // Do not fetch the file if we already have the same on the client
+    const std::string hash = getMediaHash(media);
+    if (strncmp(hash.c_str(), media->hash.c_str(), MD5_DIGEST_LENGTH) == 0) {
+      return;
+    }
+    
+    // If the hashes are not equal, fetch the media and store it
+    xsd__base64Binary payload = xsd__base64Binary();
     int res = soapProxy->GetFile(serverKey, hardwareKey, media->id, "media", 0, media->size, payload);
     
     if (res == SOAP_OK) {
@@ -155,20 +165,63 @@ namespace Xibo {
   void XiboClient::updateMediaCache() {
     const std::string serverKey("XIBODEV");
     const std::string hardwareKey("HardwareKey");
-    std::string payload = "";
+    const std::string date = getCurrentDateString();
+    std::string payload = "<files>";
     bool success = false;
     
-    int res = soapProxy->MediaInventory(serverKey, hardwareKey, payload, success);
-    
-    if ((res == SOAP_OK) && success) {
-      return;
-    }
-    
+    // First download all resources if needed
     std::list<Xml::XmlFiles::Media>::const_iterator it = xmlFiles->media.cbegin();
     while (it != xmlFiles->media.cend()) {
       getResource(&(*it));
+      payload.append("<file type='media' complete='1' id='").append(std::to_string((*it).id))
+        .append("' lastCheck='").append(date)
+        .append("' md5='").append(getMediaHash(&(*it))).append("' />");
       it++;
     }
+    payload.append("</files>");
+    
+    // Finally send the Data
+    int res = soapProxy->MediaInventory(serverKey, hardwareKey, payload, success);
+    if (res != SOAP_OK) {
+      display->showStatus(soapProxy->soap_fault_string(), 60);
+    }
+  }
+  
+  const std::string XiboClient::getCurrentDateString() {
+    struct tm * timeinfo;
+    time_t rawtime;
+    char buffer[80];
+
+    time(&rawtime);
+    timeinfo = localtime(&rawtime);
+    strftime(buffer, sizeof(buffer), "%d.%m.%Y %I:%M:%S", timeinfo);
+    return std::string(buffer);
+  }
+  
+  const std::string XiboClient::getMediaHash(const Xml::XmlFiles::Media * media) {
+    std::string result;
+    std::string file = std::string(getConfig("cache")).append(media->path);
+    uint32_t fp = open(file.c_str(), O_RDONLY);
+    MD5_CTX c;
+    char buf[512];
+    unsigned char out[MD5_DIGEST_LENGTH];
+    ssize_t bytes;
+
+    MD5_Init(&c);
+    bytes = read(fp, buf, 512);
+    while (bytes > 0) {
+      MD5_Update(&c, buf, bytes);
+      bytes = read(fp, buf, 512);
+    }
+
+    MD5_Final(out, &c);
+    close(fp);
+    
+    for (int n = 0; n < MD5_DIGEST_LENGTH; n++) {
+      sprintf(buf, "%02x", out[n]);
+      result.append(reinterpret_cast<const char *>(buf));
+    }
+    return result;
   }
   
   void XiboClient::getRequiredResources() {

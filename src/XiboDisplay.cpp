@@ -39,16 +39,16 @@ namespace Xibo {
     gdk_monitor_get_geometry(monitor, &geometry);
     gtk_window_resize(GTK_WINDOW(window), geometry.width, geometry.height);
     
-    loadStatusStyles();
-    prepareWindow();
-    initFixedArea();
-    
     // Make sure the main window and all its contents are visible
+    loadStatusStyles();
+    initFixedArea();
     gtk_widget_show_all(window);
+    
+    // Hide the Cursor and set RGBA-Mode
+    prepareWindow();
     
     // Signals for closing and destroying
     g_signal_connect(window, "destroy", G_CALLBACK(XiboDisplay::destroyWindow), NULL);
-    //g_signal_connect(fixed, "destroy", G_CALLBACK(XiboDisplay::closeWebView), window);
   }
   
   void XiboDisplay::destroyWindow(GtkWidget * widget, GtkWidget * window) {

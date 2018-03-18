@@ -57,6 +57,8 @@ namespace Xibo {
     void getRequiredResources();
     void getLayout();
     void updateMediaCache();
+    const std::string getMediaHash(const Xml::XmlFiles::Media * media);
+    const std::string getCurrentDateString();
   };
 }
 
