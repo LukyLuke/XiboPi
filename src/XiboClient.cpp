@@ -173,10 +173,22 @@ namespace Xibo {
     std::list<Xml::XmlFiles::Media>::const_iterator it = xmlFiles->media.cbegin();
     while (it != xmlFiles->media.cend()) {
       getResource(&(*it));
+      
       payload.append("<file type='media' complete='1' id='").append(std::to_string((*it).id))
-        .append("' lastCheck='").append(date)
+        .append("' lastChecked='").append(date)
         .append("' md5='").append(getMediaHash(&(*it))).append("' />");
       it++;
+    }
+    
+    // Append the Layout and all resources
+    payload.append("<file type='layout' complete='1' lastChecked='").append(date)
+      .append("' id='").append(std::to_string(xmlSchedule->defaultLayout)).append("' md5='' />");
+    
+    std::list<Xml::XmlFiles::Resource>::const_iterator it2 = xmlFiles->resource.cbegin();
+    while (it2 != xmlFiles->resource.cend()) {
+      payload.append("<file type='resource' complete='1' lastChecked=11111'").append(date)
+        .append("' id='").append(std::to_string((*it2).id)).append("' md5='' />");
+      it2++;
     }
     payload.append("</files>");
     
