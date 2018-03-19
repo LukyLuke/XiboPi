@@ -47,7 +47,7 @@ namespace Xibo {
         bool useDuration;
         uint32_t file;
         std::string raw;
-        std::map<std::string, std::string> options;
+        std::map<const std::string, std::string> options;
         std::list<Audio> audio;
       };
       
@@ -58,7 +58,7 @@ namespace Xibo {
         uint32_t z;
         uint32_t width;
         uint32_t height;
-        std::map<std::string, std::string> options;
+        std::map<const std::string, std::string> options;
         std::list<Media> media;
       };
 

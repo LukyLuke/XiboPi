@@ -46,6 +46,9 @@ namespace Xibo {
       std::list<Xml::XmlLayout::Media>::const_iterator media;
       void prepareWebView();
       
+      inline unsigned char from_hex(unsigned char ch);
+      const std::string urldecode(const std::string str);
+      
       // Timer for changing media
       gint timerStatus = 0;
       static gboolean timer(gpointer data);

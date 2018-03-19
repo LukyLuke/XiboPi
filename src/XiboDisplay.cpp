@@ -170,11 +170,11 @@ namespace Xibo {
     float ys = (float)h / height;
     if (xs < ys) {
       scale = xs;
-      offset_y = ((float)(height - h) / 2) * scale;
     } else {
       scale = ys;
-      offset_x = ((float)(width - w) / 2) * scale;
     }
+    offset_y = ((float)((height * scale) - h) / 2) * scale;
+    offset_x = ((float)((width * scale) - w) / 2) * scale;
     
     for (auto it = layout->regions.cbegin(); it != layout->regions.end(); ++it) {
       prepareRegion(&(*it), client);
@@ -189,7 +189,7 @@ namespace Xibo {
   
   WebKitWebView * XiboDisplay::addRegion(const uint32_t id, const uint32_t x, const uint32_t y, const uint32_t w, const uint32_t h) {
     WebKitWebView * web = WEBKIT_WEB_VIEW(webkit_web_view_new());
-    gtk_widget_set_size_request (GTK_WIDGET(web), (uint32_t)(w * scale), (uint32_t)(h * scale));
+    gtk_widget_set_size_request(GTK_WIDGET(web), (uint32_t)(w * scale), (uint32_t)(h * scale));
     gtk_fixed_put(GTK_FIXED(fixed), GTK_WIDGET(web), (uint32_t)(x * scale) + offset_x, (uint32_t)(y * scale) + offset_y);
     
     webkit_web_view_load_uri(web, "about:blank");

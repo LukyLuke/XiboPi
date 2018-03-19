@@ -38,7 +38,11 @@ namespace Xibo {
       return;
     }
     
+#ifndef DEBUG
+    GdkRGBA rgba = {1, 0, 0, 1};
+#else
     GdkRGBA rgba = {0, 0, 0, 0};
+#endif
     webView = display->addRegion(region->id, region->x, region->y, region->width, region->height);
     webkit_web_view_set_background_color(webView, &rgba);
     media = region->media.cbegin();
@@ -63,6 +67,10 @@ namespace Xibo {
     if (m->file > 0) {
       result = client->getFileUrl(m->file);
       webkit_web_view_load_uri(webView, result.c_str());
+      
+    } else if ((m->type == "webpage") && (m->render == "native")) {
+      webkit_web_view_load_uri(webView, urldecode(m->options.at("uri")).c_str());
+      
     } else {
       result = client->getResource(region->id, m->id);
       webkit_web_view_load_html(webView, result.c_str(), client->getConfig("base_uri").c_str());
@@ -84,6 +92,39 @@ namespace Xibo {
     XiboRegion * region = (XiboRegion *) data;
     region->show();
     return FALSE;
+  }
+  
+  inline unsigned char XiboRegion::from_hex(unsigned char ch) {
+    if (ch <= '9' && ch >= '0')
+      ch -= '0';
+    else if (ch <= 'f' && ch >= 'a')
+      ch -= 'a' - 10;
+    else if (ch <= 'F' && ch >= 'A')
+      ch -= 'A' - 10;
+    else 
+      ch = 0;
+    return ch;
+  }
+
+  const std::string XiboRegion::urldecode(const std::string str) {
+    std::string result;
+    std::string::size_type i;
+    for (i = 0; i < str.size(); ++i) {
+      if (str[i] == '+') {
+        result += ' ';
+
+      } else if (str[i] == '%' && str.size() > i+2) {
+        const unsigned char ch1 = from_hex(str[i+1]);
+        const unsigned char ch2 = from_hex(str[i+2]);
+        const unsigned char ch = (ch1 << 4) | ch2;
+        result += ch;
+        i += 2;
+        
+      } else {
+        result += str[i];
+      }
+    }
+    return result;
   }
   
 }
