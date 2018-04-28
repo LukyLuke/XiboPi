@@ -1,0 +1,36 @@
+dist: trusty
+sudo: required
+
+language: cpp
+compiler:
+  - gcc
+
+before_install:
+  - export CC=/usr/bin/gcc-7 CXX=/usr/bin/g++-7
+  - export BUILD_DIR=$TRAVIS_BUILD_DIR/build
+  - sudo apt-get -qq update
+  - pip install --user cpp-coveralls
+  - mkdir -p $BUILD_DIR && cd $BUILD_DIR
+
+after_success:
+  - coveralls --build . --root .. --include "src" --gcov-options "-lbc" --exclude-pattern ".*CMakeFiles.*"
+
+os:
+  - linux
+  addons:
+    apt:
+      sources:
+        - ubuntu-toolchain-r-test
+      packages:
+        - g++-7
+        - zlib1g-dev
+        - libexpat1-dev
+        - libssl-dev
+        - libzmqpp-dev
+        - libgtk-3-dev
+        - libwebkit2gtk-4.0-dev
+        - libgsoap-dev
+
+script:
+  - cmake -DCOVERAGE=ON -DLONGLONG=ON -DCMAKE_BUILD_TYPE=C++11=ON ..
+  - make
