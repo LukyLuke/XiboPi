@@ -3,7 +3,6 @@ sudo: required
 language: cpp
 
 before_install:
-  - export CC=gcc-7 CXX=g++-7
   - export BUILD_DIR=$TRAVIS_BUILD_DIR/build
   - sudo apt-get -y -qq update
   - pip install --user cpp-coveralls
