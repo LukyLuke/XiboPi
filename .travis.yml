@@ -3,8 +3,9 @@ sudo: required
 language: cpp
 
 before_install:
-  - export CC=/usr/bin/gcc-7 CXX=/usr/bin/g++-7
+  - export CC=gcc-7 CXX=g++-7
   - export BUILD_DIR=$TRAVIS_BUILD_DIR/build
+  - sudo add-apt-repository ppa:jonathonf/gcc-7.1
   - sudo apt-get -qq update
   - pip install --user cpp-coveralls
   - mkdir -p $BUILD_DIR && cd $BUILD_DIR
@@ -17,6 +18,7 @@ addons:
     sources:
       - ubuntu-toolchain-r-test
     packages:
+      - gcc-7
       - g++-7
       - zlib1g-dev
       - libexpat1-dev
