@@ -1,5 +1,5 @@
 dist: xenial
-sudo: required
+sudo: false
 language: cpp
 
 before_install:
