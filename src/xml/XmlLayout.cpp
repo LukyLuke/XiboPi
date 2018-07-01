@@ -26,25 +26,25 @@ namespace Xibo {
     XmlLayout::XmlLayout() {
       this->parser = XML_ParserCreate(NULL);
     }
-    
+
     XmlLayout::~XmlLayout() {
       XML_ParserFree(parser);
     }
-    
+
     void XmlLayout::parse(const std::string xml, Layout *lay) {
       layout = lay;
       resetParser();
 #ifdef DEBUG
       std::cout << xml << std::endl;
 #endif
-      
+
       int done = 0;
       if (XML_Parse(parser, xml.c_str(), xml.size(), done) == XML_STATUS_ERROR) {
         std::cerr << XML_ErrorString(XML_GetErrorCode(parser)) << " at line " << XML_GetCurrentLineNumber(parser);
         layout->message = std::string(XML_ErrorString(XML_GetErrorCode(parser)));
       }
     }
-    
+
     void XmlLayout::resetParser() {
       if (!XML_ParserReset(parser, NULL)) {
         XML_ParserFree(parser);
@@ -54,7 +54,7 @@ namespace Xibo {
       XML_SetElementHandler(parser, XmlLayout::startElementCallback, XmlLayout::endElementCallback);
       XML_SetCharacterDataHandler(parser, XmlLayout::characterDataCallback);
     }
-    
+
     void XmlLayout::expatStartElement(const char *name, const char **attrs) {
       if (strcmp(TAG_LAYOUT, name) == 0) {
         layoutTag = true;
@@ -67,7 +67,7 @@ namespace Xibo {
       }
       else if (regionTag && (strcmp(TAG_MEDIA, name) == 0)) {
         mediaTag = true;
-        layout->regions.back().media.push_back({0, "", "", 0, false, 0, "", {}, {}});
+        layout->regions.back().media.push_back({0, layout->regions.back().id, "", "", 0, false, 0, "", {}, {}});
         parseMediaAttrs(attrs);
       }
       else if (mediaTag && (strcmp(TAG_AUDIO, name) == 0)) {
@@ -103,7 +103,7 @@ namespace Xibo {
         settingsTag.clear();
       }
     }
-    
+
     void XmlLayout::expatCharacterData(const char *text, int len) {
       if (audioTag) {
         layout->regions.back().media.back().audio.back().uri.append(text, len);
@@ -166,6 +166,6 @@ namespace Xibo {
         else if (strcmp("loop", attrs[i]) == 0)    { layout->regions.back().media.back().audio.back().loop = attrs[i + 1]; }
       }
     }
-    
+
   }
 }

@@ -17,6 +17,9 @@
  *
  */
 
+#ifndef XIBO_SOAP_FILES_H
+#define XIBO_SOAP_FILES_H
+
 #include <string>
 #include <map>
 #include <list>
@@ -24,12 +27,9 @@
 
 #include <expat.h>
 
-#ifndef XIBO_SOAP_FILES_H
-#define XIBO_SOAP_FILES_H
-
 namespace Xibo {
   namespace Xml {
-      
+
     class XmlFiles {
     public:
       enum DownloadMethod { HTTP = 0, XMDS = 1 };
@@ -71,7 +71,7 @@ namespace Xibo {
 
       XmlFiles();
       ~XmlFiles();
-      
+
       /**
       * Parsing the Resources payload sent from XIBO
       * 
@@ -79,65 +79,65 @@ namespace Xibo {
       * @param Resources *res Reference to a Resources-Struct to parse the xml into
       */
       void parse(const std::string xml, Resources *res);
-      
+
     private:
       enum FileType { UNKNOWN, MEDIA, LAYOUT, RESOURCE, BLACKLIST };
-      
+
       // Main XML-TagNames
       static constexpr const char* TAG_FILES = "files";
       static constexpr const char* TAG_FILE = "file";
-      
+
       // Set if the above tags where opened
       bool filesTag = false;
       bool fileTag = false;
       bool subFileTag = false;
       bool blacklist = false;
-      
+
       Resources *resources;
       XML_Parser parser;
-      
+
       /**
        * Gets the "type" attribute from the XML-Tag and returns the Enum FileType based on the vale
        * 
        * @param char **attrs Attributes given on the Tag; Name is on the index, the value on the index+1
        */
       FileType getFileType(const char **attrs);
-      
+
       /**
        * Parses the attributes on the "files" tag
        * 
        * @param char **attrs Attributes given on the Tag; Name is on the index, the value on the index+1
        */
       void parseFilesAttrs(const char **attrs);
-      
+
       /**
        * Parses the attributes on the "file" tag if it's a Media-Type
        * 
        * @param char **attrs Attributes given on the Tag; Name is on the index, the value on the index+1
        */
       void parseMediaAttrs(const char **attrs);
-      
+
       /**
        * Parses the attributes on the "file" tag if it's a Layout-Type
        * 
        * @param char **attrs Attributes given on the Tag; Name is on the index, the value on the index+1
        */
       void parseLayoutAttrs(const char **attrs);
-      
+
       /**
        * Parses the attributes on the "file" tag if it's a Resource-Type
        * 
        * @param char **attrs Attributes given on the Tag; Name is on the index, the value on the index+1
        */
       void parseResourceAttrs(const char **attrs);
-      
+
       /**
        * Parses the attributes on the "file" tag if it's a Blacklist-Type
        * 
        * @param char **attrs Attributes given on the Tag; Name is on the index, the value on the index+1
        */
       void parseBlacklistAttrs(const char **attrs);
-      
+
       /**
        * EXPAT-Callback for a starting node
        */
@@ -158,7 +158,7 @@ namespace Xibo {
       static void characterDataCallback(void * userData, const char *text, int len) {
         (static_cast<XmlFiles *>(userData))->expatCharacterData(text, len);
       }
-      
+
       /**
        * Internal Expat-Callback for processing an open Node
        * 
@@ -166,13 +166,13 @@ namespace Xibo {
        * @param char **attrs Th Attributes
        */
       void expatStartElement(const char *name, const char **attrs);
-      
+
       /**
        * Internal Expat-Callback for processing a closing Node
        * @param char *name Then Nodename
        */
       void expatEndElement(const char *name);
-      
+
       /**
        * Internal Expat-Callback for processing text nodes
        * 
@@ -180,7 +180,7 @@ namespace Xibo {
        * @param int len The text length
        */
       void expatCharacterData(const char *text, int len);
-      
+
       /**
        * Resets the expat parser and recreates it
        */

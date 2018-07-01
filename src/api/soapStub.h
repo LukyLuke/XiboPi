@@ -20,9 +20,9 @@ A commercial use license is available from Genivia Inc., contact@genivia.com
 #ifndef soapStub_H
 #define soapStub_H
 #include "stdsoap2.h"
-#if GSOAP_VERSION != 20861
-# error "GSOAP VERSION 20861 MISMATCH IN GENERATED CODE VERSUS LIBRARY CODE: PLEASE REINSTALL PACKAGE"
-#endif
+//#if GSOAP_VERSION != 20861
+//# error "GSOAP VERSION 20861 MISMATCH IN GENERATED CODE VERSUS LIBRARY CODE: PLEASE REINSTALL PACKAGE"
+//#endif
 
 
 /******************************************************************************\

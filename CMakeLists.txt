@@ -3,6 +3,9 @@ project(XiboPi)
 
 find_package(PkgConfig REQUIRED)
 
+option(COVERAGE "Enable running with coverage" OFF)
+option(TESTS "Compile and make tests for the code?" OFF)
+option(TESTS_DETAILED "Run each test separately instead of grouped?" OFF)
 
 pkg_check_modules(GTK3 REQUIRED gtk+-3.0)
 include_directories(${GTK3_INCLUDE_DIRS})
@@ -38,6 +41,10 @@ include_directories(${ZLIB_INCLUDE_DIRS})
 add_subdirectory("${CMAKE_SOURCE_DIR}/src")
 set(SOURCE "main.cpp" ${SOURCE})
 
+if (TESTS)
+  add_subdirectory(test)
+endif (TESTS)
+
 add_executable(XiboPi ${SOURCE} ${HEADERS})
   
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DWITH_NO_C_LOCALE")
@@ -54,4 +61,3 @@ target_link_libraries(XiboPi ${SSL_LIBRARIES})
 target_link_libraries(XiboPi XiboClient)
 target_link_libraries(XiboPi XiboSoap)
 target_link_libraries(XiboPi XiboZMQ)
-  

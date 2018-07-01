@@ -17,6 +17,9 @@
  *
  */
 
+#ifndef XIBO_SOAP_Layout_H 
+#define XIBO_SOAP_Layout_H
+
 #include <string>
 #include <map>
 #include <list>
@@ -24,12 +27,9 @@
 
 #include <expat.h>
 
-#ifndef XIBO_SOAP_Layout_H 
-#define XIBO_SOAP_Layout_H
-
 namespace Xibo {
   namespace Xml {
-      
+
     class XmlLayout {
     public:
       struct Audio {
@@ -38,9 +38,10 @@ namespace Xibo {
         bool loop;
         uint32_t media;
       };
-      
+
       struct Media {
         uint32_t id;
+        uint32_t region;
         std::string type;
         std::string render;
         uint32_t duration;
@@ -50,7 +51,7 @@ namespace Xibo {
         std::map<const std::string, std::string> options;
         std::list<Audio> audio;
       };
-      
+
       struct Region {
         uint32_t id;
         uint32_t x;
@@ -71,14 +72,14 @@ namespace Xibo {
         uint32_t zindex;
         std::string backgroundImage;
         std::list<Region> regions;
-        
+
         Layout() : message(""), width(0), height(0), version(3), backgroundColor("#000"), zindex(0), backgroundImage(""), regions({}) {};
         ~Layout() {};
       };
 
       XmlLayout();
       ~XmlLayout();
-      
+
       /**
       * Parsing the Layout payload sent from XIBO
       * 
@@ -86,7 +87,7 @@ namespace Xibo {
       * @param Layout *Layout Reference to a Layout-Struct to parse the xml into
       */
       void parse(const std::string xml, Layout *lay);
-      
+
     private:
       // Main XML-TagNames
       static constexpr const char* TAG_LAYOUT = "layout";
@@ -95,49 +96,48 @@ namespace Xibo {
       static constexpr const char* TAG_MEDIA = "media";
       static constexpr const char* TAG_AUDIO = "audio";
       static constexpr const char* TAG_RAW = "raw";
-      
-      
+
       // Set if the above tags where opened
       bool layoutTag = false;
       bool regionTag = false;
       bool mediaTag = false;
       bool audioTag = false;
       bool rawTag = false;
-      
+
       // Name of the currently open Settings-Tag
       std::string settingsTag;
-      
+
       Layout *layout;
       XML_Parser parser;
-      
+
       /**
        * Parses the attributes on the "Layout" tag
        * 
        * @param char **attrs Attributes given on the Tag; Name is on the index, the value on the index+1
        */
       void parseLayoutAttrs(const char **attrs);
-      
+
       /**
        * Parses the attributes on the "Region" tag
        * 
        * @param char **attrs Attributes given on the Tag; Name is on the index, the value on the index+1
        */
       void parseRegionAttrs(const char **attrs);
-      
+
       /**
        * Parses the attributes on the "Media" tag
        * 
        * @param char **attrs Attributes given on the Tag; Name is on the index, the value on the index+1
        */
       void parseMediaAttrs(const char **attrs);
-      
+
       /**
        * Parses the attributes on the "Audio" tag
        * 
        * @param char **attrs Attributes given on the Tag; Name is on the index, the value on the index+1
        */
       void parseAudioAttrs(const char **attrs);
-      
+
       /**
        * EXPAT-Callback for a starting node
        */
@@ -158,7 +158,7 @@ namespace Xibo {
       static void characterDataCallback(void * userData, const char *text, int len) {
         (static_cast<XmlLayout *>(userData))->expatCharacterData(text, len);
       }
-      
+
       /**
        * Internal Expat-Callback for processing an open Node
        * 
@@ -166,13 +166,13 @@ namespace Xibo {
        * @param char **attrs Th Attributes
        */
       void expatStartElement(const char *name, const char **attrs);
-      
+
       /**
        * Internal Expat-Callback for processing a closing Node
        * @param char *name Then Nodename
        */
       void expatEndElement(const char *name);
-      
+
       /**
        * Internal Expat-Callback for processing text nodes
        * 
@@ -180,7 +180,7 @@ namespace Xibo {
        * @param int len The text length
        */
       void expatCharacterData(const char *text, int len);
-      
+
       /**
        * Resets the expat parser and recreates it
        */

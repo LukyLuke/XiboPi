@@ -25,30 +25,38 @@
 #include <gtk/gtk.h>
 #include <webkit2/webkit2.h>
 
+#include "XiboDisplay.h"
+#include "XiboConfig.h"
+#include "Event.h"
+
 #include "xml/XmlLayout.h"
+#include "xml/XmlFiles.h"
 
 namespace Xibo {
   class XiboDisplay;
-  class XiboClient;
-  
-  class XiboRegion {
+
+  class XiboRegion : public Event {
     public:
-      XiboRegion(XiboDisplay * display, XiboClient * client, const Xml::XmlLayout::Region * reg);
+      XiboRegion(XiboDisplay * display, const Xml::XmlLayout::Region * reg);
       ~XiboRegion();
       void show();
-      
+      void eventFired(const EVENTS ev, const void * data);
+
     private:
+      const void fireResourceRequestEvent(const Xml::XmlLayout::Media * media);
+
       const Xml::XmlLayout::Region * region;
-      XiboClient * client;
+      const Xml::XmlFiles::Resources * resources;
       XiboDisplay * display;
       WebKitWebView * webView;
-      
+
       std::list<Xml::XmlLayout::Media>::const_iterator media;
       void prepareWebView();
-      
+      const std::string getFileUrl(const uint32_t fileId);
+
       inline unsigned char from_hex(unsigned char ch);
       const std::string urldecode(const std::string str);
-      
+
       // Timer for changing media
       gint timerStatus = 0;
       static gboolean timer(gpointer data);

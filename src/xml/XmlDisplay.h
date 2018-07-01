@@ -17,6 +17,9 @@
  *
  */
 
+#ifndef XIBO_SOAP_DISPLAY_H 
+#define XIBO_SOAP_DISPLAY_H
+
 #include <string>
 #include <map>
 #include <list>
@@ -24,12 +27,8 @@
 
 #include <expat.h>
 
-#ifndef XIBO_SOAP_DISPLAY_H 
-#define XIBO_SOAP_DISPLAY_H
-
 namespace Xibo {
   namespace Xml {
-      
     class XmlDisplay {
     public:
       enum DisplayStatus { READY = 0, ADDED = 1, WAITING = 2 };
@@ -55,12 +54,12 @@ namespace Xibo {
 
       XmlDisplay();
       ~XmlDisplay();
-      
+
       const constexpr char* statusToString(const DisplayStatus value) {
         const char* values[] = { "READY", "ADDED", "WAITING" };
         return values[static_cast<int>(value)];
       }
-      
+
       /**
       * Parsing the Display payload sent from XIBO
       * 
@@ -68,7 +67,7 @@ namespace Xibo {
       * @param Display *display Reference to a Display-Struct to parse the xml into
       */
       void parse(const std::string xml, Display *display);
-      
+
     private:
       // Main XML-TagNames
       static constexpr const char* TAG_SCREENSHOT = "screenShotRequested";
@@ -78,12 +77,12 @@ namespace Xibo {
       static constexpr const char* TAG_NAME = "displayName";
       static constexpr const char* TAG_CMD_CMD = "commandString";
       static constexpr const char* TAG_CMD_VAL = "validationString";
-      
+
       // In case the display setting is defined as "windows" the TagName first characte is Uppercase
       static constexpr const char* TAG_SCREENSHOT_WIN = "ScreenShotRequested";
       static constexpr const char* TAG_TIMEZONE_WIN = "DisplayTimeZone";
       static constexpr const char* TAG_NAME_WIN = "DisplayName";
-      
+
       // Set if the above tags where opened
       bool displayTag = false;
       bool commandTag = false;
@@ -92,20 +91,20 @@ namespace Xibo {
       bool displayNameTag = false;
       bool commandCmdTag = false;
       bool commandValTag = false;
-      
+
       // Name of the currently open Settings-Tag
       std::string settingsTag;
-      
+
       Display *display;
       XML_Parser parser;
-      
+
       /**
        * Parses the attributes on the "display" tag
        * 
        * @param char **attrs Attributes given on the Tag; Name is on the index, the value on the index+1
        */
       void parseDisplayAttrs(const char **attrs);
-      
+
       /**
        * EXPAT-Callback for a starting node
        */
@@ -126,7 +125,7 @@ namespace Xibo {
       static void characterDataCallback(void * userData, const char *text, int len) {
         (static_cast<XmlDisplay *>(userData))->expatCharacterData(text, len);
       }
-      
+
       /**
        * Internal Expat-Callback for processing an open Node
        * 
@@ -134,13 +133,13 @@ namespace Xibo {
        * @param char **attrs Th Attributes
        */
       void expatStartElement(const char *name, const char **attrs);
-      
+
       /**
        * Internal Expat-Callback for processing a closing Node
        * @param char *name Then Nodename
        */
       void expatEndElement(const char *name);
-      
+
       /**
        * Internal Expat-Callback for processing text nodes
        * 
@@ -148,7 +147,7 @@ namespace Xibo {
        * @param int len The text length
        */
       void expatCharacterData(const char *text, int len);
-      
+
       /**
        * Resets the expat parser and recreates it
        */

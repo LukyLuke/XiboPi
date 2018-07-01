@@ -64,9 +64,9 @@ A commercial use license is available from Genivia, Inc., contact@genivia.com
 
 #include "stdsoap2.h"
 
-#if GSOAP_VERSION != GSOAP_LIB_VERSION
-# error "GSOAP VERSION MISMATCH IN LIBRARY: PLEASE REINSTALL PACKAGE"
-#endif
+//#if GSOAP_VERSION != GSOAP_LIB_VERSION
+//# error "GSOAP VERSION MISMATCH IN LIBRARY: PLEASE REINSTALL PACKAGE"
+//#endif
 
 #if defined(VXWORKS) && defined(WM_SECURE_KEY_STORAGE)
 # include <ipcom_key_db.h> /* vxWorks compatible */

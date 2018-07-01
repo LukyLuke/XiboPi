@@ -26,25 +26,25 @@ namespace Xibo {
     XmlDisplay::XmlDisplay() {
       this->parser = XML_ParserCreate(NULL);
     }
-    
+
     XmlDisplay::~XmlDisplay() {
       XML_ParserFree(parser);
     }
-    
+
     void XmlDisplay::parse(const std::string xml, Display *disp) {
       display = disp;
       resetParser();
 #ifdef DEBUG
       std::cout << xml << std::endl;
 #endif
-      
+
       int done = 0;
       if (XML_Parse(parser, xml.c_str(), xml.size(), done) == XML_STATUS_ERROR) {
         std::cerr << XML_ErrorString(XML_GetErrorCode(parser)) << " at line " << XML_GetCurrentLineNumber(parser);
         display->message = std::string(XML_ErrorString(XML_GetErrorCode(parser)));
       }
     }
-    
+
     void XmlDisplay::resetParser() {
       if (!XML_ParserReset(parser, NULL)) {
         XML_ParserFree(parser);
@@ -54,7 +54,7 @@ namespace Xibo {
       XML_SetElementHandler(parser, XmlDisplay::startElementCallback, XmlDisplay::endElementCallback);
       XML_SetCharacterDataHandler(parser, XmlDisplay::characterDataCallback);
     }
-    
+
     void XmlDisplay::expatStartElement(const char *name, const char **attrs) {
       if (!displayTag && (strcmp(TAG_DISPLAY, name) == 0)) {
         displayTag = true;
@@ -116,7 +116,7 @@ namespace Xibo {
         settingsTag.clear();
       }
     }
-    
+
     void XmlDisplay::expatCharacterData(const char *text, int len) {
       if (screenshotTag) {
         strncpy((char*)(&display->screenShotRequested), text, len);
@@ -150,6 +150,6 @@ namespace Xibo {
         else if (strcmp("status", attrs[i]) == 0)               { display->status = static_cast<DisplayStatus>(atoi(attrs[i + 1])); }
       }
     }
-    
+
   }
 }

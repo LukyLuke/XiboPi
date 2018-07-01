@@ -17,15 +17,15 @@
  *
  */
 
+#ifndef XIBO_SOAP_SCHEDULE_H
+#define XIBO_SOAP_SCHEDULE_H
+
 #include <string>
 #include <map>
 #include <list>
 #include <iostream>
 
 #include <expat.h>
-
-#ifndef XIBO_SOAP_SCHEDULE_H
-#define XIBO_SOAP_SCHEDULE_H
 
 namespace Xibo {
   namespace Xml {

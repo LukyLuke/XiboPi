@@ -17,19 +17,25 @@
  *
  */
 
+#ifndef XIBO_DISPLAY_H
+#define XIBO_DISPLAY_H
+
 #include <string>
 #include <list>
 #include <gtk/gtk.h>
 #include <webkit2/webkit2.h>
 
+#include "Event.h"
 #include "XiboRegion.h"
-#include "xml/XmlLayout.h"
+#include "XiboConfig.h"
 
-#ifndef XIBO_DISPLAY_H
-#define XIBO_DISPLAY_H
+#include "xml/XmlLayout.h"
+#include "xml/XmlDisplay.h"
 
 namespace Xibo {
-  class XiboDisplay {
+  class XiboRegion;
+  
+  class XiboDisplay : public Event {
     public:
       XiboDisplay();
       ~XiboDisplay();
@@ -37,18 +43,19 @@ namespace Xibo {
       void showStatus(const std::string message, int time);
       static void destroyWindow(GtkWidget * widget, GtkWidget * window);
       static gboolean closeWebView(WebKitWebView * webView, GtkWidget * window);
-      void setLayout(const Xml::XmlLayout::Layout * layout, XiboClient * client);
+      void setLayout(const Xml::XmlLayout::Layout * layout);
       WebKitWebView * addRegion(const uint32_t id, const uint32_t x, const uint32_t y, const uint32_t w, const uint32_t h);
-      
+      void eventFired(const EVENTS ev, const void * data);
+
     private:
       GtkWidget * window = NULL;
       GtkWidget * fixed = NULL;
       GtkWidget * overlay = NULL;
       GtkWidget * grid = NULL;
-      
+
       gint timerStatus = 0;
       static gboolean hideStatus(gpointer data);
-      
+
       uint32_t width = 0;
       uint32_t height = 0;
       uint32_t offset_x = 0;
@@ -56,12 +63,14 @@ namespace Xibo {
       float scale = 1;
       std::string background = "";
       std::list<XiboRegion> regions;
-      
+
       void initFixedArea();
       void prepareWindow();
       void loadStatusStyles();
       void setWindowBackground();
-      void prepareRegion(const Xml::XmlLayout::Region * region, XiboClient * client);
+      void prepareRegion(const Xml::XmlLayout::Region * region);
+
+      static void layoutChangedEvent(const EVENTS ev, const void * arg);
   };
 }
 #endif // XIBO_DISPLAY_H

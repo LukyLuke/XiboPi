@@ -17,48 +17,57 @@
  *
  */
 
+#ifndef XIBO_CLIENT_H
+#define XIBO_CLIENT_H
+
+#include "XiboConfig.h"
+#include "Event.h"
+
 #include <map>
 #include <list>
 #include <string>
+#include <openssl/md5.h>
+#include <ctime>
+#include <cstring>
 
 #include "api/soapxmdsBindingProxy.h"
-#include "XiboDisplay.h"
 #include "xml/XmlDisplay.h"
 #include "xml/XmlSchedule.h"
 #include "xml/XmlFiles.h"
 #include "xml/XmlLayout.h"
 
-#ifndef XIBO_CLIENT_H
-#define XIBO_CLIENT_H
-
 namespace Xibo {
-  class XiboClient {
+  class XiboClient : public Event {
   public:
-    XiboClient(const std::map<std::string, std::string> * conf, XiboDisplay * display);
+    XiboClient();
     ~XiboClient();
     bool connect(const char * server);
     void schedule();
-    void getResource(const Xml::XmlFiles::Media * media);
-    const std::string getResource(const uint32_t region, const uint32_t media);
-    const std::string getFileUrl(const uint32_t fileId);
-    const std::string getConfig(const std::string key);
-  
+    void eventFired(const EVENTS ev, const void * data);
+
   private:
-    const std::map<std::string, std::string> * config;
     xmdsBindingProxy * soapProxy = NULL;
-    XiboDisplay * display = NULL;
-    
+
     Xml::XmlDisplay::Display * xmlDisplay;
     Xml::XmlSchedule::Schedule * xmlSchedule;
     Xml::XmlFiles::Resources * xmlFiles;
     Xml::XmlLayout::Layout * xmlLayout;
-    
+
     void connectSoapProxy(const char * server);
-    void getRequiredResources();
-    void getLayout();
-    void updateMediaCache();
-    const std::string getMediaHash(const Xml::XmlFiles::Media * media);
+    bool getResource(const Xml::XmlFiles::Media * media);
+    const void getResource(const uint32_t region, const uint32_t media);
+    const void getRequiredResources();
+    const void getLayout();
+    const void updateMediaCache();
+    const std::string getMediaHash(const std::string file);
     const std::string getCurrentDateString();
+
+    const void fireMessageEvent(const EVENTS ev, const std::string message);
+    const void fireDisplayEvent(const EVENTS ev, const Xml::XmlDisplay::Display * display);
+    const void fireSchedulerEvent(const EVENTS ev, const Xml::XmlSchedule::Schedule * schedule);
+    const void fireLayoutEvent(const EVENTS ev, const Xml::XmlLayout::Layout * layout);
+    const void fireResourcesEvent(const EVENTS ev, const Xml::XmlFiles::Resources * resources);
+    const void fireMediaInventoryEvent(const EVENTS ev, const bool success);
   };
 }
 
