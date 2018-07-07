@@ -34,8 +34,8 @@
 
 namespace Xibo {
   class XiboRegion;
-  
-  class XiboDisplay : public Event {
+
+  class XiboDisplay : public EventListener {
     public:
       XiboDisplay();
       ~XiboDisplay();
@@ -43,8 +43,8 @@ namespace Xibo {
       void showStatus(const std::string message, int time);
       static void destroyWindow(GtkWidget * widget, GtkWidget * window);
       static gboolean closeWebView(WebKitWebView * webView, GtkWidget * window);
-      void setLayout(const Xml::XmlLayout::Layout * layout);
-      WebKitWebView * addRegion(const uint32_t id, const uint32_t x, const uint32_t y, const uint32_t w, const uint32_t h);
+      WebKitWebView * addRegion(const uint32_t x, const uint32_t y, const uint32_t w, const uint32_t h);
+
       void eventFired(const EVENTS ev, const void * data);
 
     private:
@@ -69,8 +69,7 @@ namespace Xibo {
       void loadStatusStyles();
       void setWindowBackground();
       void prepareRegion(const Xml::XmlLayout::Region * region);
-
-      static void layoutChangedEvent(const EVENTS ev, const void * arg);
+      void setLayout(const Xml::XmlLayout::Layout layout);
   };
 }
 #endif // XIBO_DISPLAY_H

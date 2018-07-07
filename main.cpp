@@ -18,6 +18,7 @@
  */
 #include <gtk/gtk.h>
 
+#include "src/Event.h"
 #include "src/XiboDisplay.h"
 #include "src/XiboClient.h"
 

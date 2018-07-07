@@ -33,6 +33,12 @@ namespace Xibo {
     class XmlFiles {
     public:
       enum DownloadMethod { HTTP = 0, XMDS = 1 };
+      struct MediaResource {
+        uint32_t id;
+        uint32_t region;
+        uint32_t size;
+        std::string resource;
+      };
       struct Media {
         uint32_t id;
         uint32_t size;

@@ -35,7 +35,7 @@
 namespace Xibo {
   class XiboDisplay;
 
-  class XiboRegion : public Event {
+  class XiboRegion : public EventListener {
     public:
       XiboRegion(XiboDisplay * display, const Xml::XmlLayout::Region * reg);
       ~XiboRegion();
@@ -43,10 +43,10 @@ namespace Xibo {
       void eventFired(const EVENTS ev, const void * data);
 
     private:
-      const void fireResourceRequestEvent(const Xml::XmlLayout::Media * media);
+      const void fireResourceRequestEvent(const Xml::XmlLayout::Media media);
 
-      const Xml::XmlLayout::Region * region;
-      const Xml::XmlFiles::Resources * resources;
+      Xml::XmlLayout::Region region;
+      Xml::XmlFiles::Resources resources;
       XiboDisplay * display;
       WebKitWebView * webView;
 

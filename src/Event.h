@@ -20,9 +20,17 @@
 #ifndef XIBO_EVENT_H
 #define XIBO_EVENT_H
 
+#include <gdk/gdk.h>
+
+#include <thread>
+#include <mutex>
+#include <condition_variable>
+#include <atomic>
+#include <queue>
 #include <map>
 #include <list>
 #include <string>
+#include <iostream>
 
 namespace Xibo {
   enum EVENTS {
@@ -39,27 +47,34 @@ namespace Xibo {
     SOAP_FAULT_RECEIVED
   };
 
-  struct MessageEvent {
-    std::string message = "";
-    bool error = false;
+  template <class T>
+  struct Event {
+    const EVENTS ev;
+    const T data;
   };
 
-  class Event {
+  class EventListener {
   public:
     virtual void eventFired(const EVENTS ev, const void * data) = 0;
   };
 
   class EventHandler {
   public:
-    static void registerFor(const EVENTS ev, Event * event);
-    const static void fire(const EVENTS ev, const void * data);
+    static void registerFor(const EVENTS ev, EventListener * event);
+    const static void stop();
+    const static void fire(const void * data);
+    void process();
 
   private:
     EventHandler();
     ~EventHandler();
-    std::map<const EVENTS, std::list<Event *>> registered;
+
+    std::queue<const void *> message_queue;
+    std::map<const EVENTS, std::list<EventListener *>> registered;
   };
-  static EventHandler * xiboEventInstance = nullptr;
+
 };
+static Xibo::EventHandler * xiboEventInstance = nullptr;
+static gboolean processXiboEvents(void * d);
 
 #endif //XIBO_EVENT_H

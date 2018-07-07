@@ -32,6 +32,8 @@ include_directories(${SSL_INCLUDE_DIRS})
 link_directories(${SSL_LIBRARY_DIRS})
 add_definitions(${SSL_CFLAGS_OTHER})
 
+find_package(Threads REQUIRED)
+
 find_package(cppzmq REQUIRED)
 include_directories(${cppzmq_INCLUDE_DIR})
 
@@ -51,6 +53,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DWITH_NO_C_LOCALE")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 set_target_properties(XiboPi PROPERTIES LINKER_LANGUAGE "CXX")
 
+target_link_libraries(XiboPi ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries(XiboPi ${cppzmq_LIBRARY})
 target_link_libraries(XiboPi ${WEBKIT2_LIBRARIES})
 target_link_libraries(XiboPi ${GTK3_LIBRARIES})

@@ -31,6 +31,8 @@ namespace Xibo {
   }
 
   XiboClient::~XiboClient() {
+    EventHandler::stop();
+
     if (soapProxy != NULL)
       delete soapProxy;
     delete xmlDisplay;
@@ -40,38 +42,42 @@ namespace Xibo {
   }
 
   const void XiboClient::fireMessageEvent(const EVENTS ev, const std::string message) {
-    EventHandler::fire(ev, &message);
+    EventHandler::fire((const void *) new Event<std::string>({ev, message}));
   }
 
-  const void XiboClient::fireDisplayEvent(const EVENTS ev, const Xml::XmlDisplay::Display * display) {
-    EventHandler::fire(ev, display);
+  const void XiboClient::fireDisplayEvent(const EVENTS ev, const Xml::XmlDisplay::Display display) {
+    EventHandler::fire((const void *) new Event<Xml::XmlDisplay::Display>({ev, display}));
   }
 
-  const void XiboClient::fireSchedulerEvent(const EVENTS ev, const Xml::XmlSchedule::Schedule * schedule) {
-    EventHandler::fire(ev, schedule);
+  const void XiboClient::fireSchedulerEvent(const EVENTS ev, const Xml::XmlSchedule::Schedule schedule) {
+    EventHandler::fire((const void *) new Event<Xml::XmlSchedule::Schedule>({ev, schedule}));
     getRequiredResources();
   }
 
-  const void XiboClient::fireLayoutEvent(const EVENTS ev, const Xml::XmlLayout::Layout * layout) {
-    EventHandler::fire(ev, layout);
+  const void XiboClient::fireLayoutEvent(const EVENTS ev, const Xml::XmlLayout::Layout layout) {
+    EventHandler::fire((const void *) new Event<Xml::XmlLayout::Layout>({ev, layout}));
   }
 
-  const void XiboClient::fireResourcesEvent(const EVENTS ev, const Xml::XmlFiles::Resources * resources) {
-    EventHandler::fire(ev, resources);
+  const void XiboClient::fireResourcesEvent(const EVENTS ev, const Xml::XmlFiles::Resources resources) {
+    EventHandler::fire((const void *) new Event<Xml::XmlFiles::Resources>({ev, resources}));
     updateMediaCache();
   }
 
+  const void XiboClient::fireMediaResourceEvent(const EVENTS ev, const Xml::XmlFiles::MediaResource resource) {
+    EventHandler::fire((const void *) new Event<Xml::XmlFiles::MediaResource>({ev, resource}));
+  }
+
   const void XiboClient::fireMediaInventoryEvent(const EVENTS ev, const bool success) {
+    EventHandler::fire((const void *) new Event<bool>({ev, success}));
     if (success) {
-      EventHandler::fire(ev, &success);
       getLayout();
     }
   }
 
   void XiboClient::eventFired(const EVENTS ev, const void * data) {
     if (ev == RESOURCE_REQUEST) {
-      const Xml::XmlLayout::Media * media = (const Xml::XmlLayout::Media *)data;
-      getResource(media->region, media->id);
+      const Xml::XmlLayout::Media media = *(const Xml::XmlLayout::Media *)data;
+      getResource(media.region, media.id);
     }
   }
 
@@ -100,7 +106,7 @@ namespace Xibo {
     if (res == SOAP_OK) {
       Xml::XmlDisplay disp;
       disp.parse(payload, xmlDisplay);
-      fireDisplayEvent(DISPLAY_REGISTERED, xmlDisplay);
+      fireDisplayEvent(DISPLAY_REGISTERED, *xmlDisplay);
       return true;
     }
 
@@ -118,7 +124,7 @@ namespace Xibo {
     if (res == SOAP_OK) {
       Xml::XmlSchedule schedule;
       schedule.parse(payload, xmlSchedule);
-      fireSchedulerEvent(SCHEDULE_RECEIVED, xmlSchedule);
+      fireSchedulerEvent(SCHEDULE_RECEIVED, *xmlSchedule);
 
     } else {
       fireMessageEvent(SOAP_FAULT_RECEIVED, soapProxy->soap_fault_string());
@@ -133,14 +139,13 @@ namespace Xibo {
     int res = soapProxy->GetResource(serverKey, hardwareKey, xmlSchedule->defaultLayout, std::to_string(region), std::to_string(media), payload);
 
     if (res == SOAP_OK) {
-      fireMessageEvent(RESOURCE_RECEIVED, payload);
+      fireMediaResourceEvent(RESOURCE_RECEIVED, Xml::XmlFiles::MediaResource({media, region, (uint32_t)payload.length(), payload}));
       return;
     }
-
     fireMessageEvent(SOAP_FAULT_RECEIVED, soapProxy->soap_fault_string());
   }
 
-  bool XiboClient::getResource(const Xml::XmlFiles::Media * media) {
+  bool XiboClient::storeResources(const Xml::XmlFiles::Media * media) {
     const std::string serverKey("XIBODEV");
     const std::string hardwareKey("HardwareKey");
 
@@ -183,7 +188,7 @@ namespace Xibo {
     std::list<Xml::XmlFiles::Media>::const_iterator media = xmlFiles->media.cbegin();
     while (media != xmlFiles->media.cend()) {
       std::string file = std::string(XiboConfig::get("cache")).append((*media).saveAs);
-      downloaded = getResource(&(*media));
+      downloaded = storeResources(&(*media));
 
       payload.append("<file type='media' complete='")
         .append(downloaded ? "1" : "0")
@@ -280,7 +285,7 @@ namespace Xibo {
     if (res == SOAP_OK) {
       Xml::XmlFiles resources;
       resources.parse(payload, xmlFiles);
-      fireResourcesEvent(RESOURCES_RECEIVED, xmlFiles);
+      fireResourcesEvent(RESOURCES_RECEIVED, *xmlFiles);
       return;
     }
     fireMessageEvent(SOAP_FAULT_RECEIVED, soapProxy->soap_fault_string());
@@ -296,7 +301,7 @@ namespace Xibo {
     if (res == SOAP_OK) {
       Xml::XmlLayout layout;
       layout.parse(std::string(reinterpret_cast<const char *>(payload.__ptr), payload.__size), xmlLayout);
-      fireLayoutEvent(UPDATE_LAYOUT, xmlLayout);
+      fireLayoutEvent(UPDATE_LAYOUT, *xmlLayout);
       return;
     }
     fireMessageEvent(SOAP_FAULT_RECEIVED, soapProxy->soap_fault_string());

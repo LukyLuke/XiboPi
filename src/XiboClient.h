@@ -37,7 +37,7 @@
 #include "xml/XmlLayout.h"
 
 namespace Xibo {
-  class XiboClient : public Event {
+  class XiboClient : public EventListener {
   public:
     XiboClient();
     ~XiboClient();
@@ -54,7 +54,7 @@ namespace Xibo {
     Xml::XmlLayout::Layout * xmlLayout;
 
     void connectSoapProxy(const char * server);
-    bool getResource(const Xml::XmlFiles::Media * media);
+    bool storeResources(const Xml::XmlFiles::Media * media);
     const void getResource(const uint32_t region, const uint32_t media);
     const void getRequiredResources();
     const void getLayout();
@@ -63,10 +63,11 @@ namespace Xibo {
     const std::string getCurrentDateString();
 
     const void fireMessageEvent(const EVENTS ev, const std::string message);
-    const void fireDisplayEvent(const EVENTS ev, const Xml::XmlDisplay::Display * display);
-    const void fireSchedulerEvent(const EVENTS ev, const Xml::XmlSchedule::Schedule * schedule);
-    const void fireLayoutEvent(const EVENTS ev, const Xml::XmlLayout::Layout * layout);
-    const void fireResourcesEvent(const EVENTS ev, const Xml::XmlFiles::Resources * resources);
+    const void fireDisplayEvent(const EVENTS ev, const Xml::XmlDisplay::Display display);
+    const void fireSchedulerEvent(const EVENTS ev, const Xml::XmlSchedule::Schedule schedule);
+    const void fireLayoutEvent(const EVENTS ev, const Xml::XmlLayout::Layout layout);
+    const void fireResourcesEvent(const EVENTS ev, const Xml::XmlFiles::Resources resources);
+    const void fireMediaResourceEvent(const EVENTS ev, const Xml::XmlFiles::MediaResource resource);
     const void fireMediaInventoryEvent(const EVENTS ev, const bool success);
   };
 }

@@ -22,7 +22,7 @@
 namespace Xibo {
   XiboRegion::XiboRegion(XiboDisplay * display, const Xml::XmlLayout::Region * reg) {
     this->display = display;
-    this->region = reg;
+    this->region = *const_cast<Xml::XmlLayout::Region *>(reg);
     this->webView = nullptr;
     EventHandler::registerFor(RESOURCES_RECEIVED, this);
     EventHandler::registerFor(RESOURCE_RECEIVED, this);
@@ -30,23 +30,26 @@ namespace Xibo {
 
   XiboRegion::~XiboRegion() { }
 
-  const void XiboRegion::fireResourceRequestEvent(const Xml::XmlLayout::Media * media) {
-    EventHandler::fire(RESOURCE_REQUEST, media);
+  const void XiboRegion::fireResourceRequestEvent(const Xml::XmlLayout::Media media) {
+    EventHandler::fire((const void *) new Event<Xml::XmlLayout::Media>({RESOURCE_REQUEST, media}));
   }
 
   void XiboRegion::eventFired(const EVENTS ev, const void * data) {
     if (ev == RESOURCES_RECEIVED) {
-      resources = (const Xml::XmlFiles::Resources *)data;
+      resources = *(const Xml::XmlFiles::Resources *) data;
 
     } else if (ev == RESOURCE_RECEIVED) {
-      webkit_web_view_load_html(webView, ((std::string*)data)->c_str(), XiboConfig::get("base_uri").c_str());
+      Xml::XmlFiles::MediaResource resource = *(const Xml::XmlFiles::MediaResource *) data;
+      if (region.id == resource.region) {
+        webkit_web_view_load_html(webView, resource.resource.c_str(), XiboConfig::get("base_uri").c_str());
+      }
     }
   }
 
   const std::string XiboRegion::getFileUrl(const uint32_t fileId) {
     std::string path = XiboConfig::get("base_uri");
-    std::list<Xml::XmlFiles::Media>::const_iterator it = resources->media.cbegin();
-    while (it != resources->media.cend()) {
+    std::list<Xml::XmlFiles::Media>::const_iterator it = resources.media.cbegin();
+    while (it != resources.media.cend()) {
       const Xml::XmlFiles::Media * m = &(*it);
       if (m->id == fileId) {
         return path.append(m->path);
@@ -66,22 +69,22 @@ namespace Xibo {
 #else
     GdkRGBA rgba = {0, 0, 0, 0};
 #endif
-    webView = display->addRegion(region->id, region->x, region->y, region->width, region->height);
+    webView = display->addRegion(region.x, region.y, region.width, region.height);
     webkit_web_view_set_background_color(webView, &rgba);
-    media = region->media.cbegin();
+    media = region.media.cbegin();
   }
 
   void XiboRegion::show() {
     prepareWebView();
 
     // There is no media, we can't show something
-    if (region->media.empty()) {
+    if (region.media.empty()) {
       return;
     }
 
     // Retart with the first media
-    if (media == region->media.end()) {
-      media = region->media.begin();
+    if (media == region.media.end()) {
+      media = region.media.begin();
     }
 
     // Show the media
@@ -98,11 +101,11 @@ namespace Xibo {
       webkit_web_view_load_html(webView, m->raw.c_str(), NULL);
 
     } else {
-      fireResourceRequestEvent(m);
+      fireResourceRequestEvent(*media);
     }
 
     // Start the timer for the next show-event if there is a second one and a duration
-    if (region->media.size() > 1) {
+    if (region.media.size() > 1) {
       if (timerStatus != 0) {
         g_source_remove(timerStatus);
       }

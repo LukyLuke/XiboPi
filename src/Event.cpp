@@ -20,31 +20,59 @@
 #include "Event.h"
 
 namespace Xibo {
-  EventHandler::EventHandler() {}
-  EventHandler::~EventHandler() {}
+  EventHandler::EventHandler() { }
 
-  void EventHandler::registerFor(const EVENTS ev, Event * event) {
+  EventHandler::~EventHandler() { }
+
+  void EventHandler::process() {
+    if (xiboEventInstance != nullptr) {
+      if (message_queue.empty()) {
+        return;
+      }
+
+      // We need only the Event-Type EVENTS and don't care about the event data itself
+      Event<void *> * event = (Event<void * > *) message_queue.front();
+      message_queue.pop();
+      std::map<const EVENTS, std::list<EventListener *>>::iterator it = registered.find(event->ev);
+      if (it != registered.end()) {
+        for (std::list<EventListener *>::const_iterator recv = it->second.cbegin(); recv != it->second.cend(); recv++) {
+          (*recv)->eventFired(event->ev, &(event->data));
+        }
+      }
+      delete event;
+    }
+  }
+
+  void EventHandler::registerFor(const EVENTS ev, EventListener * event) {
     if (xiboEventInstance == nullptr) {
       xiboEventInstance = new EventHandler();
+      gdk_threads_add_idle(processXiboEvents, (void *)nullptr);
     }
-    std::map<const EVENTS, std::list<Event *>> * reg = &xiboEventInstance->registered;
+
+    std::map<const EVENTS, std::list<EventListener *>> * reg = &xiboEventInstance->registered;
     if (reg->find(ev) == reg->end()) {
-      reg->insert(std::pair<const EVENTS, std::list<Event *>>(ev, {event}));
+      reg->insert(std::pair<const EVENTS, std::list<EventListener *>>(ev, {event}));
     } else {
       reg->find(ev)->second.push_back(event);
     }
   }
 
-  const void EventHandler::fire(const EVENTS ev, const void * data) {
+  const void EventHandler::fire(const void * data) {
     if (xiboEventInstance != nullptr) {
-      std::map<const EVENTS, std::list<Event *>> * reg = &xiboEventInstance->registered;
-      std::map<const EVENTS, std::list<Event *>>::iterator it = reg->find(ev);
-      if (it != reg->end()) {
-        for (std::list<Event *>::const_iterator recv = it->second.cbegin(); recv != it->second.cend(); recv++) {
-          (*recv)->eventFired(ev, data);
-        }
-      }
+      xiboEventInstance->message_queue.push(data);
     }
   }
 
+  const void EventHandler::stop() {
+    delete xiboEventInstance;
+    xiboEventInstance = nullptr;
+  }
+}
+
+gboolean processXiboEvents(gpointer d) {
+  if (xiboEventInstance != nullptr) {
+    xiboEventInstance->process();
+    return TRUE;
+  }
+  return FALSE;
 }

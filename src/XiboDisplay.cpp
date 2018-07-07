@@ -22,33 +22,31 @@
 namespace Xibo {
   XiboDisplay::XiboDisplay() {
     this->regions = std::list<XiboRegion>();
-  }
 
-  XiboDisplay::~XiboDisplay() {
-  }
-
-  void XiboDisplay::eventFired(const EVENTS ev, const void * data) {
-    if ((ev == SOAP_FAULT_RECEIVED) || (ev == RESOURCE_FAILED) || (ev == MESSAGE_RECEIVED)) {
-      std::cout << "XiboDisplay::String: " << *(std::string*)data << std::endl;
-      showStatus(*(std::string*)data, 60);
-
-    } else if (ev == UPDATE_LAYOUT) {
-      const Xml::XmlLayout::Layout * layout = (const Xml::XmlLayout::Layout *)data;
-      std::cout << "XiboDisplay::Layout: " << layout->message << std::endl;
-      setLayout(layout);
-
-    } else if (ev == DISPLAY_REGISTERED) {
-      const Xml::XmlDisplay::Display * display = (const Xml::XmlDisplay::Display*)data;
-      std::cout << "XiboDisplay::Display: " << display->message << std::endl;
-    }
-  }
-
-  void XiboDisplay::init() {
     EventHandler::registerFor(DISPLAY_REGISTERED, this);
     EventHandler::registerFor(UPDATE_LAYOUT, this);
     EventHandler::registerFor(RESOURCE_FAILED, this);
     EventHandler::registerFor(SOAP_FAULT_RECEIVED, this);
+  }
 
+  XiboDisplay::~XiboDisplay() { }
+
+  void XiboDisplay::eventFired(const EVENTS ev, const void * data) {
+    if ((ev == SOAP_FAULT_RECEIVED) || (ev == RESOURCE_FAILED) || (ev == MESSAGE_RECEIVED)) {
+      std::cout << "XiboDisplay::String: " << *(const std::string *)data << std::endl;
+      showStatus(*(const std::string *)data, 60);
+
+    } else if (ev == UPDATE_LAYOUT) {
+      const Xml::XmlLayout::Layout layout = *(const Xml::XmlLayout::Layout *) data;
+      setLayout(layout);
+
+    } else if (ev == DISPLAY_REGISTERED) {
+      const Xml::XmlDisplay::Display display = *(const Xml::XmlDisplay::Display *) data;
+      std::cout << "XiboDisplay::Display: " << display.message << std::endl;
+    }
+  }
+
+  void XiboDisplay::init() {
     // Create a new Window and make if Fullscreen with no border
     window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_fullscreen(GTK_WINDOW(window));
@@ -179,10 +177,10 @@ namespace Xibo {
     return FALSE;
   }
 
-  void XiboDisplay::setLayout(const Xml::XmlLayout::Layout * layout) {
-    width = layout->width;
-    height = layout->height;
-    background.assign(layout->backgroundColor);
+  void XiboDisplay::setLayout(const Xml::XmlLayout::Layout layout) {
+    width = layout.width;
+    height = layout.height;
+    background.assign(layout.backgroundColor);
     setWindowBackground();
 
     int32_t w;
@@ -199,7 +197,7 @@ namespace Xibo {
     offset_y = ((float)((height * scale) - h) / 2) * scale;
     offset_x = ((float)((width * scale) - w) / 2) * scale;
 
-    for (auto it = layout->regions.cbegin(); it != layout->regions.end(); ++it) {
+    for (auto it = layout.regions.cbegin(); it != layout.regions.end(); ++it) {
       prepareRegion(&(*it));
     }
   }
@@ -210,7 +208,7 @@ namespace Xibo {
     regions.push_back(*reg);
   }
 
-  WebKitWebView * XiboDisplay::addRegion(const uint32_t id, const uint32_t x, const uint32_t y, const uint32_t w, const uint32_t h) {
+  WebKitWebView * XiboDisplay::addRegion(const uint32_t x, const uint32_t y, const uint32_t w, const uint32_t h) {
     WebKitWebView * web = WEBKIT_WEB_VIEW(webkit_web_view_new());
     gtk_widget_set_size_request(GTK_WIDGET(web), (uint32_t)(w * scale), (uint32_t)(h * scale));
     gtk_fixed_put(GTK_FIXED(fixed), GTK_WIDGET(web), (uint32_t)(x * scale) + offset_x, (uint32_t)(y * scale) + offset_y);
