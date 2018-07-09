@@ -31,5 +31,5 @@ after_success:
 
 script:
   - mkdir -p $BUILD_DIR && cd $BUILD_DIR
-  - cmake -DCOVERAGE=ON -DLONGLONG=ON -DCMAKE_BUILD_TYPE=C++11=ON ..
+  - cmake -DCOVERAGE=ON ..
   - make
