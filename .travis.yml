@@ -8,7 +8,7 @@ before_install:
   - sudo apt-get install -y -qq zlib1g-dev libexpat1-dev libssl-dev libzmq3-dev libgtk-3-dev libwebkit2gtk-4.0-dev libgsoap-dev
   - pip install --user cpp-coveralls
   - git clone https://github.com/zeromq/cppzmq.git
-  - cd cppzmq && mkdir build && cmake .. && sudo make -j4 install
+  - cd cppzmq && mkdir -p build && cd build && cmake .. && sudo make -j4 install
 
 after_success:
   - coveralls --build . --root .. --include "src" --gcov-options "-lbc" --exclude-pattern ".*CMakeFiles.*"
