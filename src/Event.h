@@ -22,10 +22,6 @@
 
 #include <gdk/gdk.h>
 
-#include <thread>
-#include <mutex>
-#include <condition_variable>
-#include <atomic>
 #include <queue>
 #include <map>
 #include <list>
@@ -70,7 +66,7 @@ namespace Xibo {
     ~EventHandler();
 
     std::queue<const void *> message_queue;
-    std::map<const EVENTS, std::list<EventListener *>> registered;
+    std::map<const EVENTS, std::list<EventListener * > > registered;
   };
 
 };
