@@ -22,6 +22,9 @@
 #include <string>
 #include <sstream>
 #include <iostream>
+
+#include <sys/stat.h>
+
 #include "api/xmdsBinding.nsmap"
 
 namespace Xibo {
@@ -130,14 +133,19 @@ namespace Xibo {
   }
 
   const void XiboClient::getResource(const uint32_t region, const uint32_t media) {
-    std::string payload;
-    int res = soapProxy->GetResource(serverKey, hardwareKey, xmlSchedule->defaultLayout, std::to_string(region), std::to_string(media), payload);
+    const std::string file = std::string(XiboConfig::get("cache"))
+      .append(resourceCacheFileBase)
+      .append(std::to_string(xmlSchedule->defaultLayout))
+      .append("-")
+      .append(std::to_string(media))
+      .append("-")
+      .append(std::to_string(region))
+      .append(".resource");
 
-    if (res == SOAP_OK) {
-      fireMediaResourceEvent(RESOURCE_RECEIVED, Xml::XmlFiles::MediaResource({media, region, (uint32_t)payload.length(), payload}));
-      return;
-    }
-    fireMessageEvent(SOAP_FAULT_RECEIVED, soapProxy->soap_fault_string());
+    std::ifstream f(file);
+    std::stringstream buffer;
+    buffer << f.rdbuf();
+    fireMediaResourceEvent(RESOURCE_RECEIVED, Xml::XmlFiles::MediaResource({media, region, static_cast<uint32_t>(buffer.str().length()), buffer.str()}));
   }
 
   const void XiboClient::getRequiredResources() {
@@ -200,18 +208,29 @@ namespace Xibo {
         layout++;
     }
 
-    // Append all Resources
-    // TODO: Check first in the cache and fetch them if needed
+    // Download all Resources
     std::list<Xml::XmlFiles::Resource>::const_iterator resource = xmlFiles->resource.cbegin();
     while (resource != xmlFiles->resource.cend()) {
-      downloaded = false;
+      const std::string resource_file = std::string(XiboConfig::get("cache"))
+        .append(resourceCacheFileBase)
+        .append(std::to_string((*resource).layout))
+        .append("-")
+        .append(std::to_string((*resource).media))
+        .append("-")
+        .append(std::to_string((*resource).region))
+        .append(".resource");
+
+      downloaded = fetchAndStoreResource(resource_file, &(*resource));
+
       payload.append("<file type='resource' complete='")
         .append(downloaded ? "1" : "0")
         .append("' lastChecked='")
         .append(date)
         .append("' id='")
         .append(std::to_string((*resource).id))
-        .append("' md5='' />");
+        .append("' md5='")
+        .append(getMediaHash(resource_file))
+        .append("' />");
         resource++;
     }
     payload.append("</files>");
@@ -265,13 +284,63 @@ namespace Xibo {
     if (validateMediaHash(file, media->hash)) {
       return true;
     }
-    return fetchAndStoreResource(file, media->id, "media", media->size);
+    return downloadAndStoreFile(file, media->id, "media", media->size);
+  }
+
+  bool XiboClient::fetchAndStoreResource(const std::string file, const Xml::XmlFiles::Resource * resource) {
+    struct stat buffer;
+    bool actual = false;
+
+    std::string cached_content = std::string(file).append(" ").append(resource->updated).append("\n");
+    std::string cache_file = std::string(XiboConfig::get("cache"))
+        .append(resourceCacheFileBase)
+        .append(".updatecache");
+    if (stat(cache_file.c_str(), &buffer) == 0) {
+      FILE * fp = fopen(cache_file.c_str(), "r");
+      if (fp != NULL) {
+        std::string line;
+        char * _line = NULL;
+        size_t len = 0;
+        while ((getline(&_line, &len, fp)) != -1) {
+          line.assign(_line);
+
+          // Skip empty lines
+          if (line.find_first_not_of(" \f\t\v\r\n") == std::string::npos) {
+            continue;
+          }
+
+          std::string::size_type pos = line.find(' ', 0);
+          if (line.substr(0, pos).compare(file) == 0) {
+            std::string check = line.substr(pos + 1, line.length() - pos - 2);
+            actual = resource->updated.compare(check) == 0;
+          } else {
+            cached_content.append(line);
+          }
+        }
+        if (_line) free(_line);
+        fclose(fp);
+      }
+    }
+
+    // Rewrite the cache
+    FILE * fp = fopen(cache_file.c_str(), "w+");
+    if (fp != NULL) {
+      fwrite(cached_content.c_str(), sizeof(char), cached_content.size(), fp);
+      fclose(fp);
+    }
+
+    // Download the Resource if it's not cached or a newer version is on the Server
+    const bool exists = (stat(file.c_str(), &buffer) == 0);
+    if (!exists || !actual) {
+      return downloadAndStoreResource(file, resource->layout, resource->media, resource->region);
+    }
+    return true;
   }
 
   bool XiboClient::fetchAndStoreLayout(const std::string file, const Xml::XmlFiles::Layout * layout) {
     bool result = true;
     if (!validateMediaHash(file, layout->hash)) {
-      result = fetchAndStoreResource(file, layout->id, "layout", 0);
+      result = downloadAndStoreFile(file, layout->id, "layout", 0);
     }
     if (result && (layout->id == xmlSchedule->defaultLayout)) {
       Xml::XmlLayout layout;
@@ -284,9 +353,19 @@ namespace Xibo {
     return result;
   }
 
-  bool XiboClient::fetchAndStoreResource(const std::string file, const uint32_t id, const std::string type, uint32_t size) {
+  bool XiboClient::downloadAndStoreFile(const std::string file, const uint32_t id, const std::string type, uint32_t size) {
     xsd__base64Binary payload = xsd__base64Binary();
     int res = soapProxy->GetFile(serverKey, hardwareKey, id, type, 0, size, payload);
+    return writeToFile(res, file, (const char *) payload.__ptr, payload.__size);
+  }
+
+  bool XiboClient::downloadAndStoreResource(const std::string file, const uint32_t layout, const uint32_t media, const uint32_t region) {
+    std::string payload;
+    int res = soapProxy->GetResource(serverKey, hardwareKey, layout, std::to_string(region), std::to_string(media), payload);
+    return writeToFile(res, file, payload.c_str(), payload.size());
+  }
+
+  bool XiboClient::writeToFile(const int res, const std::string file, const char * ptr, const int size) {
     if (res == SOAP_OK) {
       FILE * fp = fopen(file.c_str(), "w");
       if (fp == NULL) {
@@ -294,12 +373,11 @@ namespace Xibo {
         return false;
       }
 
-      fwrite(payload.__ptr, sizeof(char), payload.__size, fp);
+      fwrite(ptr, sizeof(char), size, fp);
       fclose(fp);
       fireMessageEvent(RESOURCE_STORED, file);
       return true;
     }
-
     fireMessageEvent(SOAP_FAULT_RECEIVED, soapProxy->soap_fault_string());
     return false;
   }

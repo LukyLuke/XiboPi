@@ -66,7 +66,10 @@ namespace Xibo {
     void connectSoapProxy(const char * server);
     bool fetchAndStoreMediaFile(const std::string file, const Xml::XmlFiles::Media * media);
     bool fetchAndStoreLayout(const std::string file, const Xml::XmlFiles::Layout * layout);
-    bool fetchAndStoreResource(const std::string file, const uint32_t id, const std::string type, uint32_t size);
+    bool fetchAndStoreResource(const std::string file, const Xml::XmlFiles::Resource * layout);
+    bool downloadAndStoreFile(const std::string file, const uint32_t id, const std::string type, uint32_t size);
+    bool downloadAndStoreResource(const std::string file, const uint32_t layout, const uint32_t media, const uint32_t region);
+    bool writeToFile(const int res, const std::string file, const char * ptr, const int size);
     const void getResource(const uint32_t region, const uint32_t media);
     const void getRequiredResources();
     const void updateMediaCache();
