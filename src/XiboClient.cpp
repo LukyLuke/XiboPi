@@ -19,6 +19,9 @@
 
 #include "XiboClient.h"
 
+#include <string>
+#include <sstream>
+#include <iostream>
 #include "api/xmdsBinding.nsmap"
 
 namespace Xibo {
@@ -72,9 +75,6 @@ namespace Xibo {
 
   const void XiboClient::fireMediaInventoryEvent(const EVENTS ev, const bool success) {
     EventHandler::fire((const void *) new Event<bool>({ev, success}));
-    if (success) {
-      getLayout();
-    }
   }
 
   void XiboClient::eventFired(const EVENTS ev, const void * data) {
@@ -140,32 +140,16 @@ namespace Xibo {
     fireMessageEvent(SOAP_FAULT_RECEIVED, soapProxy->soap_fault_string());
   }
 
-  bool XiboClient::storeResources(const Xml::XmlFiles::Media * media) {
-    // Do not fetch the file if we already have the same on the client
-    std::string file = std::string(XiboConfig::get("cache")).append(media->saveAs);
-    const std::string hash = getMediaHash(file);
-    if (strncmp(hash.c_str(), media->hash.c_str(), MD5_DIGEST_LENGTH) == 0) {
-      return true;
-    }
-
-    // If the hashes are not equal, fetch the media and store it
-    xsd__base64Binary payload = xsd__base64Binary();
-    int res = soapProxy->GetFile(serverKey, hardwareKey, media->id, "media", 0, media->size, payload);
+  const void XiboClient::getRequiredResources() {
+    std::string payload;
+    int res = soapProxy->RequiredFiles(serverKey, hardwareKey, payload);
     if (res == SOAP_OK) {
-      FILE * fp = fopen(file.c_str(), "w");
-      if (fp == NULL) {
-        fireMessageEvent(RESOURCE_FAILED, std::string("Unable to write File: ").append(file));
-        return false;
-      }
-
-      fwrite(payload.__ptr, sizeof(char), payload.__size, fp);
-      fclose(fp);
-      fireMessageEvent(RESOURCE_STORED, file);
-      return true;
+      Xml::XmlFiles resources;
+      resources.parse(payload, xmlFiles);
+      fireResourcesEvent(RESOURCES_RECEIVED, *xmlFiles);
+      return;
     }
-
     fireMessageEvent(SOAP_FAULT_RECEIVED, soapProxy->soap_fault_string());
-    return false;
   }
 
   const void XiboClient::updateMediaCache() {
@@ -174,11 +158,13 @@ namespace Xibo {
     bool success = false;
     bool downloaded= false;
 
-    // First download all resources if needed
+    // Download all Media-Files if the cache is out of date
     std::list<Xml::XmlFiles::Media>::const_iterator media = xmlFiles->media.cbegin();
     while (media != xmlFiles->media.cend()) {
-      std::string file = std::string(XiboConfig::get("cache")).append((*media).saveAs);
-      downloaded = storeResources(&(*media));
+      const std::string file = std::string(XiboConfig::get("cache"))
+        .append((*media).saveAs);
+
+      downloaded = fetchAndStoreMediaFile(file, &(*media));
 
       payload.append("<file type='media' complete='")
         .append(downloaded ? "1" : "0")
@@ -192,17 +178,27 @@ namespace Xibo {
         media++;
     }
 
-    // Append the Layouts
-    // TODO: Check first in the cache and fetch them if needed
-    // TODO: Is it really the "defaultLayout"?
-    downloaded = false;
-    payload.append("<file type='layout' complete='")
-      .append(downloaded ? "1" : "0")
-      .append("' lastChecked='")
-      .append(date)
-      .append("' id='")
-      .append(std::to_string(xmlSchedule->defaultLayout))
-      .append("' md5='' />");
+    // Download all Layouts and append the defaultLayout
+    std::list<Xml::XmlFiles::Layout>::const_iterator layout = xmlFiles->layout.cbegin();
+    while (layout != xmlFiles->layout.cend()) {
+      const std::string layout_file = std::string(XiboConfig::get("cache"))
+        .append(layoutCacheFileBase)
+        .append(std::to_string((*layout).id))
+        .append(".xml");
+
+      downloaded = fetchAndStoreLayout(layout_file, &(*layout));
+
+      payload.append("<file type='layout' complete='")
+        .append(downloaded ? "1" : "0")
+        .append("' lastChecked='")
+        .append(date)
+        .append("' id='")
+        .append(std::to_string((*layout).id))
+        .append("' md5='")
+        .append(getMediaHash(layout_file))
+        .append("' />");
+        layout++;
+    }
 
     // Append all Resources
     // TODO: Check first in the cache and fetch them if needed
@@ -265,29 +261,52 @@ namespace Xibo {
     }
     return result;
   }
-
-  const void XiboClient::getRequiredResources() {
-    std::string payload;
-    int res = soapProxy->RequiredFiles(serverKey, hardwareKey, payload);
-    if (res == SOAP_OK) {
-      Xml::XmlFiles resources;
-      resources.parse(payload, xmlFiles);
-      fireResourcesEvent(RESOURCES_RECEIVED, *xmlFiles);
-      return;
+  bool XiboClient::fetchAndStoreMediaFile(const std::string file, const Xml::XmlFiles::Media * media) {
+    if (validateMediaHash(file, media->hash)) {
+      return true;
     }
-    fireMessageEvent(SOAP_FAULT_RECEIVED, soapProxy->soap_fault_string());
+    return fetchAndStoreResource(file, media->id, "media", media->size);
   }
 
-  const void XiboClient::getLayout() {
-    xsd__base64Binary payload = xsd__base64Binary();
-    int res = soapProxy->GetFile(serverKey, hardwareKey, xmlSchedule->defaultLayout, "layout", 0, 0, payload);
-
-    if (res == SOAP_OK) {
+  bool XiboClient::fetchAndStoreLayout(const std::string file, const Xml::XmlFiles::Layout * layout) {
+    bool result = true;
+    if (!validateMediaHash(file, layout->hash)) {
+      result = fetchAndStoreResource(file, layout->id, "layout", 0);
+    }
+    if (result && (layout->id == xmlSchedule->defaultLayout)) {
       Xml::XmlLayout layout;
-      layout.parse(std::string(reinterpret_cast<const char *>(payload.__ptr), payload.__size), xmlLayout);
+      std::ifstream f(file);
+      std::stringstream buffer;
+      buffer << f.rdbuf();
+      layout.parse(buffer.str(), xmlLayout);
       fireLayoutEvent(UPDATE_LAYOUT, *xmlLayout);
-      return;
     }
-    fireMessageEvent(SOAP_FAULT_RECEIVED, soapProxy->soap_fault_string());
+    return result;
   }
+
+  bool XiboClient::fetchAndStoreResource(const std::string file, const uint32_t id, const std::string type, uint32_t size) {
+    xsd__base64Binary payload = xsd__base64Binary();
+    int res = soapProxy->GetFile(serverKey, hardwareKey, id, type, 0, size, payload);
+    if (res == SOAP_OK) {
+      FILE * fp = fopen(file.c_str(), "w");
+      if (fp == NULL) {
+        fireMessageEvent(RESOURCE_FAILED, std::string("Unable to write File: ").append(file));
+        return false;
+      }
+
+      fwrite(payload.__ptr, sizeof(char), payload.__size, fp);
+      fclose(fp);
+      fireMessageEvent(RESOURCE_STORED, file);
+      return true;
+    }
+
+    fireMessageEvent(SOAP_FAULT_RECEIVED, soapProxy->soap_fault_string());
+    return false;
+  }
+
+  const bool XiboClient::validateMediaHash(const std::string file, const std::string required) {
+    const std::string hash = getMediaHash(file);
+    return (strncmp(hash.c_str(), required.c_str(), MD5_DIGEST_LENGTH) == 0);
+  }
+
 }

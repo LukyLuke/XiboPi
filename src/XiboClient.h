@@ -50,6 +50,9 @@ namespace Xibo {
     std::string serverKey;
     std::string hardwareKey;
 
+    const std::string layoutCacheFileBase = "xibo_layout_";
+    const std::string resourceCacheFileBase = "xibo_resouce_";
+
     const std::string clientType = "windows";
     const std::string operationSystem = "Linux";
     const std::string clientVersion = "1.8.3";
@@ -61,11 +64,13 @@ namespace Xibo {
     Xml::XmlLayout::Layout * xmlLayout;
 
     void connectSoapProxy(const char * server);
-    bool storeResources(const Xml::XmlFiles::Media * media);
+    bool fetchAndStoreMediaFile(const std::string file, const Xml::XmlFiles::Media * media);
+    bool fetchAndStoreLayout(const std::string file, const Xml::XmlFiles::Layout * layout);
+    bool fetchAndStoreResource(const std::string file, const uint32_t id, const std::string type, uint32_t size);
     const void getResource(const uint32_t region, const uint32_t media);
     const void getRequiredResources();
-    const void getLayout();
     const void updateMediaCache();
+    const bool validateMediaHash(const std::string file, const std::string required);
     const std::string getMediaHash(const std::string file);
     const std::string getCurrentDateString();
 
