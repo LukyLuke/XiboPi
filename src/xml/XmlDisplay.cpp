@@ -40,7 +40,7 @@ namespace Xibo {
 
       int done = 0;
       if (XML_Parse(parser, xml.c_str(), xml.size(), done) == XML_STATUS_ERROR) {
-        std::cerr << XML_ErrorString(XML_GetErrorCode(parser)) << " at line " << XML_GetCurrentLineNumber(parser);
+        std::cerr << "[XmlDisplay] " << XML_ErrorString(XML_GetErrorCode(parser)) << " at line " << XML_GetCurrentLineNumber(parser);
         display->message = std::string(XML_ErrorString(XML_GetErrorCode(parser)));
       }
     }

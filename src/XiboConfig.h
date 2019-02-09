@@ -46,6 +46,7 @@ namespace Xibo {
   public:
     const static void insert(std::string key, std::string value);
     const static std::string get(std::string key);
+    const static std::string get(std::string key, std::string default_value);
     const static void checkEnvironment();
 
   private:

@@ -73,7 +73,7 @@ namespace config {
 }
 
 namespace Xibo {
-  const char config_file[] = "config.ini";
+  const char config_file[] = "xibo.conf";
   const char config_dir[]  = ".Xibo/";
   const char cache_dir[]  = "cache/";
 
@@ -94,10 +94,15 @@ namespace Xibo {
   }
 
   const std::string XiboConfig::get(std::string key) {
+    return get(key, "");
+  }
+
+  const std::string XiboConfig::get(std::string key, std::string default_value) {
     if (getInstance()->configuration.count(key) != 0) {
       return getInstance()->configuration.find(key)->second;
     }
-    return "";
+    std::cout << "[XiboConfig] Not found: '" << key << "'; Fallback: '" << default_value << "'; You should add a '" << key << " = VALUE' entry to the Configuration" << std::endl;
+    return default_value;
   }
 
   const void XiboConfig::checkEnvironment() {
@@ -113,14 +118,14 @@ namespace Xibo {
 
     // Hard fail in case of we where not able to initialize the configuration
     if (ret != 0 && errno != EEXIST) {
-      std::cout << "Error(" << strerror(errno) << ") while create cache directory: " << inst->get("cache") << std::endl;
+      std::cout << "[XiboConfig] Error(" << strerror(errno) << ") while create cache directory: " << inst->get("cache") << std::endl;
       exit(1);
     }
 
     // Change to the config directory which is our home
     ret = chdir(inst->get("home").c_str());
     if (ret != 0) {
-      std::cout << "Error(" << strerror(errno) << ") while change to directory: " << inst->get("home") << std::endl;
+      std::cout << "[XiboConfig] Error(" << strerror(errno) << ") while change to directory: " << inst->get("home") << std::endl;
       exit(1);
     }
   }
@@ -137,6 +142,7 @@ namespace Xibo {
   }
 
   void XiboConfig::readConfiguration(const char * file) {
+    std::cout << "[XiboConfig] Reading Configuration: " << file << std::endl;
     std::ifstream ifs(file, std::ifstream::in);
     ifs >> configuration;
     ifs.close();

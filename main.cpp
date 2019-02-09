@@ -21,8 +21,7 @@
 #include "src/Event.h"
 #include "src/XiboDisplay.h"
 #include "src/XiboClient.h"
-
-const char server[] = "http://172.18.0.5/xmds.php?v=5";
+#include "src/XiboConfig.h"
 
 int main(int argc, char* argv[]) {
   // Initialize GTK+
@@ -31,8 +30,17 @@ int main(int argc, char* argv[]) {
   Xibo::XiboDisplay display;
   display.init();
 
+  std::string connect;
+  connect.append(Xibo::XiboConfig::get("protocol", "http"));
+  connect.append("://");
+  connect.append(Xibo::XiboConfig::get("host", "127.0.0.1"));
+  connect.append(":");
+  connect.append(Xibo::XiboConfig::get("port", "80"));
+  connect.append(Xibo::XiboConfig::get("path", "/"));
+  connect.append("xmds.php?v=5");
+
   Xibo::XiboClient xibo;
-  if (xibo.connect(server)) {
+  if (xibo.connect(connect.c_str())) {
     xibo.schedule();
   }
 

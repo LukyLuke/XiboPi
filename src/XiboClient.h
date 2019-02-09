@@ -47,6 +47,13 @@ namespace Xibo {
 
   private:
     xmdsBindingProxy * soapProxy = NULL;
+    std::string serverKey;
+    std::string hardwareKey;
+
+    const std::string clientType = "windows";
+    const std::string operationSystem = "Linux";
+    const std::string clientVersion = "1.8.3";
+    const int clientCode = 1;
 
     Xml::XmlDisplay::Display * xmlDisplay;
     Xml::XmlSchedule::Schedule * xmlSchedule;

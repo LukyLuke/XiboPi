@@ -26,25 +26,25 @@ namespace Xibo {
     XmlSchedule::XmlSchedule() {
       this->parser = XML_ParserCreate(NULL);
     }
-    
+
     XmlSchedule::~XmlSchedule() {
       XML_ParserFree(parser);
     }
-    
+
     void XmlSchedule::parse(const std::string xml, Schedule *sche) {
       schedule = sche;
       resetParser();
 #ifdef DEBUG
       std::cout << xml << std::endl;
 #endif
-      
+
       int done = 0;
       if (XML_Parse(parser, xml.c_str(), xml.size(), done) == XML_STATUS_ERROR) {
-        std::cerr << XML_ErrorString(XML_GetErrorCode(parser)) << " at line " << XML_GetCurrentLineNumber(parser);
+        std::cerr << "[XmlSchedule] " << XML_ErrorString(XML_GetErrorCode(parser)) << " at line " << XML_GetCurrentLineNumber(parser);
         schedule->message = std::string(XML_ErrorString(XML_GetErrorCode(parser)));
       }
     }
-    
+
     void XmlSchedule::resetParser() {
       if (!XML_ParserReset(parser, NULL)) {
         XML_ParserFree(parser);
@@ -54,7 +54,7 @@ namespace Xibo {
       XML_SetElementHandler(parser, XmlSchedule::startElementCallback, XmlSchedule::endElementCallback);
       XML_SetCharacterDataHandler(parser, XmlSchedule::characterDataCallback);
     }
-    
+
     void XmlSchedule::expatStartElement(const char *name, const char **attrs) {
       if (!scheduleTag && (strcmp(TAG_SCHEDULE, name) == 0)) {
         scheduleTag = true;
@@ -91,7 +91,7 @@ namespace Xibo {
       else if ((dependentsTag || dependantsTag) && (strcmp(TAG_FILE, name) == 0)) {
         fileTag = true;
       }
-      
+
     }
 
     void XmlSchedule::expatEndElement(const char *name) {
@@ -124,7 +124,7 @@ namespace Xibo {
       }
 
     }
-    
+
     void XmlSchedule::expatCharacterData(const char *text, int len) {
       if (fileTag && defaultTag) {
         schedule->defaults.push_back(std::string().assign(text, len));
@@ -154,7 +154,7 @@ namespace Xibo {
         if (strcmp("file", attrs[i]) == 0) { schedule->defaultLayout = atoi(attrs[i + 1]); }
       }
     }
-    
+
     void XmlSchedule::parseLayoutAttrs(const char **attrs) {
       for (int i = 0; attrs[i]; i += 2) {
         if      (strcmp("scheduleid", attrs[i]) == 0) { schedule->layouts.back().eventId = atoi(attrs[i + 1]); }
@@ -164,7 +164,7 @@ namespace Xibo {
         else if (strcmp("todt", attrs[i]) == 0)       { schedule->layouts.back().upto.assign(attrs[i + 1]); }
       }
     }
-    
+
     void XmlSchedule::parseCommandAttrs(const char **attrs) {
       for (int i = 0; attrs[i]; i += 2) {
         if      (strcmp("scheduleid", attrs[i]) == 0) { schedule->commands.back().eventId = atoi(attrs[i + 1]); }
@@ -172,6 +172,6 @@ namespace Xibo {
         else if (strcmp("code", attrs[i]) == 0)       { schedule->commands.back().code.assign(attrs[i + 1]); }
       }
     }
-    
+
   }
 }

@@ -28,6 +28,9 @@ namespace Xibo {
     this->xmlFiles = new Xml::XmlFiles::Resources();
     this->xmlLayout = new Xml::XmlLayout::Layout();
     EventHandler::registerFor(RESOURCE_REQUEST, this);
+
+    this->serverKey = XiboConfig::get("server_key", "XIBODEV");
+    this->hardwareKey = XiboConfig::get("hardware_key", "HardwareKey");
   }
 
   XiboClient::~XiboClient() {
@@ -83,6 +86,7 @@ namespace Xibo {
 
   void XiboClient::connectSoapProxy(const char * server) {
     if (soapProxy == NULL) {
+      std::cout << "[XiboClient] Connection to " << server << std::endl;
       soapProxy = new xmdsBindingProxy(server);
     }
   }
@@ -90,18 +94,15 @@ namespace Xibo {
   bool XiboClient::connect(const char * server) {
     connectSoapProxy(server);
 
-    const std::string serverKey("XIBODEV");
-    const std::string hardwareKey("HardwareKey");
-    const std::string displayName("DisplayName");
-    const std::string clientType("windows");
-    const std::string clientVersion("1.8.3");
-    const std::string operationSystem("Linux");
-    const std::string macAddress("11:22:33:aa:bb:cc");
-    const std::string xmrChannel("Channel");
+    // Not yet... Or probably when XMR is used?
     const std::string publicKey("");
-    std::string payload;
 
-    int res = soapProxy->RegisterDisplay(serverKey, hardwareKey, displayName, clientType, clientVersion, 1, operationSystem, macAddress, xmrChannel, publicKey, payload);
+    const std::string displayName(XiboConfig::get("display_name", "DisplayName"));
+    const std::string macAddress(XiboConfig::get("mac_address", "11:22:33:aa:bb:cc"));
+    const std::string xmrChannel(XiboConfig::get("xmr_channel", "Channel"));
+
+    std::string payload;
+    int res = soapProxy->RegisterDisplay(serverKey, hardwareKey, displayName, clientType, clientVersion, clientCode, operationSystem, macAddress, xmrChannel, publicKey, payload);
 
     if (res == SOAP_OK) {
       Xml::XmlDisplay disp;
@@ -115,10 +116,7 @@ namespace Xibo {
   }
 
   void XiboClient::schedule() {
-    const std::string serverKey("XIBODEV");
-    const std::string hardwareKey("HardwareKey");
     std::string payload;
-
     int res = soapProxy->Schedule(serverKey, hardwareKey, payload);
 
     if (res == SOAP_OK) {
@@ -132,10 +130,7 @@ namespace Xibo {
   }
 
   const void XiboClient::getResource(const uint32_t region, const uint32_t media) {
-    const std::string serverKey("XIBODEV");
-    const std::string hardwareKey("HardwareKey");
     std::string payload;
-
     int res = soapProxy->GetResource(serverKey, hardwareKey, xmlSchedule->defaultLayout, std::to_string(region), std::to_string(media), payload);
 
     if (res == SOAP_OK) {
@@ -146,9 +141,6 @@ namespace Xibo {
   }
 
   bool XiboClient::storeResources(const Xml::XmlFiles::Media * media) {
-    const std::string serverKey("XIBODEV");
-    const std::string hardwareKey("HardwareKey");
-
     // Do not fetch the file if we already have the same on the client
     std::string file = std::string(XiboConfig::get("cache")).append(media->saveAs);
     const std::string hash = getMediaHash(file);
@@ -177,8 +169,6 @@ namespace Xibo {
   }
 
   const void XiboClient::updateMediaCache() {
-    const std::string serverKey("XIBODEV");
-    const std::string hardwareKey("HardwareKey");
     const std::string date = getCurrentDateString();
     std::string payload = "<files>";
     bool success = false;
@@ -277,10 +267,7 @@ namespace Xibo {
   }
 
   const void XiboClient::getRequiredResources() {
-    const std::string serverKey("XIBODEV");
-    const std::string hardwareKey("HardwareKey");
     std::string payload;
-
     int res = soapProxy->RequiredFiles(serverKey, hardwareKey, payload);
     if (res == SOAP_OK) {
       Xml::XmlFiles resources;
@@ -292,10 +279,7 @@ namespace Xibo {
   }
 
   const void XiboClient::getLayout() {
-    const std::string serverKey("XIBODEV");
-    const std::string hardwareKey("HardwareKey");
     xsd__base64Binary payload = xsd__base64Binary();
-
     int res = soapProxy->GetFile(serverKey, hardwareKey, xmlSchedule->defaultLayout, "layout", 0, 0, payload);
 
     if (res == SOAP_OK) {

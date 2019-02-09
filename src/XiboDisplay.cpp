@@ -33,7 +33,7 @@ namespace Xibo {
 
   void XiboDisplay::eventFired(const EVENTS ev, const void * data) {
     if ((ev == SOAP_FAULT_RECEIVED) || (ev == RESOURCE_FAILED) || (ev == MESSAGE_RECEIVED)) {
-      std::cout << "XiboDisplay::String: " << *(const std::string *)data << std::endl;
+      std::cout << "[XiboDisplay] eventFired::String: " << *(const std::string *)data << std::endl;
       showStatus(*(const std::string *)data, 60);
 
     } else if (ev == UPDATE_LAYOUT) {
@@ -42,7 +42,7 @@ namespace Xibo {
 
     } else if (ev == DISPLAY_REGISTERED) {
       const Xml::XmlDisplay::Display display = *(const Xml::XmlDisplay::Display *) data;
-      std::cout << "XiboDisplay::Display: " << display.message << std::endl;
+      std::cout << "[XiboDisplay] eventFired::Display: " << display.message << std::endl;
     }
   }
 

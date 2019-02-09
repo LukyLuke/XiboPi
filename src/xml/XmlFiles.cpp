@@ -26,25 +26,25 @@ namespace Xibo {
     XmlFiles::XmlFiles() {
       this->parser = XML_ParserCreate(NULL);
     }
-    
+
     XmlFiles::~XmlFiles() {
       XML_ParserFree(parser);
     }
-    
+
     void XmlFiles::parse(const std::string xml, Resources *res) {
       resources = res;
       resetParser();
 #ifdef DEBUG
       std::cout << xml << std::endl;
 #endif
-      
+
       int done = 0;
       if (XML_Parse(parser, xml.c_str(), xml.size(), done) == XML_STATUS_ERROR) {
-        std::cerr << XML_ErrorString(XML_GetErrorCode(parser)) << " at line " << XML_GetCurrentLineNumber(parser);
+        std::cerr << "[XmlFiles] " << XML_ErrorString(XML_GetErrorCode(parser)) << " at line " << XML_GetCurrentLineNumber(parser);
         resources->message = std::string(XML_ErrorString(XML_GetErrorCode(parser)));
       }
     }
-    
+
     void XmlFiles::resetParser() {
       if (!XML_ParserReset(parser, NULL)) {
         XML_ParserFree(parser);
@@ -54,44 +54,44 @@ namespace Xibo {
       XML_SetElementHandler(parser, XmlFiles::startElementCallback, XmlFiles::endElementCallback);
       XML_SetCharacterDataHandler(parser, XmlFiles::characterDataCallback);
     }
-    
+
     void XmlFiles::expatStartElement(const char *name, const char **attrs) {
       if (strcmp(TAG_FILES, name) == 0) {
         filesTag = true;
         parseFilesAttrs(attrs);
       }
       else if (filesTag && (strcmp(TAG_FILE, name) == 0)) {
-        subFileTag == fileTag;
-        blacklist == blacklist && subFileTag;
+        subFileTag = fileTag;
+        blacklist = blacklist && subFileTag;
         fileTag = true;
-        
+
         switch (getFileType(attrs)) {
           case MEDIA:
             resources->media.push_back({0, 0, "", "", "", DownloadMethod::XMDS});
             parseMediaAttrs(attrs);
             break;
-            
+
           case LAYOUT:
             resources->layout.push_back({0, 0, "", "", "", DownloadMethod::XMDS});
             parseLayoutAttrs(attrs);
             break;
-            
+
           case RESOURCE:
             resources->resource.push_back({0, 0, 0, 0, ""});
             parseResourceAttrs(attrs);
             break;
-            
+
           case BLACKLIST:
             blacklist = true;
             break;
-            
+
           default:
             if (blacklist) {
               parseBlacklistAttrs(attrs);
             }
             break;
         }
-        
+
       }
     }
 
@@ -104,11 +104,11 @@ namespace Xibo {
         else            { fileTag = false; }
       }
     }
-    
+
     void XmlFiles::expatCharacterData(const char *text, int len) {
       // There is no CDATA Content in this XML
     }
-    
+
     XmlFiles::FileType XmlFiles::getFileType(const char **attrs) {
       for (int i = 0; attrs[i]; i += 2) {
         if (strcmp("type", attrs[i]) == 0) {
@@ -146,7 +146,7 @@ namespace Xibo {
         if (strcmp("id", attrs[i]) == 0) { resources->blacklist.push_back(atoi(attrs[i + 1])); }
       }
     }
-    
+
     void XmlFiles::parseLayoutAttrs(const char **attrs) {
       for (int i = 0; attrs[i]; i += 2) {
         if      (strcmp("id", attrs[i]) == 0)       { resources->layout.back().id = atoi(attrs[i + 1]); }
@@ -157,7 +157,7 @@ namespace Xibo {
         else if (strcmp("download", attrs[i]) == 0) { resources->layout.back().downloadMethod = static_cast<DownloadMethod>(atoi(attrs[i + 1])); }
       }
     }
-    
+
     void XmlFiles::parseMediaAttrs(const char **attrs) {
       for (int i = 0; attrs[i]; i += 2) {
         if      (strcmp("id", attrs[i]) == 0)       { resources->media.back().id = atoi(attrs[i + 1]); }
@@ -168,7 +168,7 @@ namespace Xibo {
         else if (strcmp("download", attrs[i]) == 0) { resources->media.back().downloadMethod = static_cast<DownloadMethod>(atoi(attrs[i + 1])); }
       }
     }
-    
+
     void XmlFiles::parseResourceAttrs(const char **attrs) {
       for (int i = 0; attrs[i]; i += 2) {
         if      (strcmp("id", attrs[i]) == 0)       { resources->resource.back().id = atoi(attrs[i + 1]); }
@@ -178,6 +178,6 @@ namespace Xibo {
         else if (strcmp("updated", attrs[i]) == 0)  { resources->resource.back().updated.assign(attrs[i + 1]); }
       }
     }
-    
+
   }
 }
